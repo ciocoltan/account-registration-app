@@ -1,4 +1,7 @@
 import { api, APIError } from "encore.dev/api";
+import { secret } from "encore.dev/config";
+
+const syntelliCoreUrl = secret("SyntelliCoreUrl");
 
 export interface LoginRequest {
   email: string;
@@ -19,15 +22,37 @@ export const login = api<LoginRequest, LoginResponse>(
       throw APIError.invalidArgument("Email and password are required");
     }
 
-    // Mock authentication logic
-    if (req.email === "test@example.com" && req.password === "password") {
-      const jwt = `mock-jwt-token-${Date.now()}`;
-      return {
-        jwt,
-        message: "Login successful"
-      };
-    }
+    try {
+      const response = await fetch(`${syntelliCoreUrl()}/api/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: req.email,
+          password: req.password,
+        }),
+      });
 
-    throw APIError.unauthenticated("Invalid email or password");
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw APIError.unauthenticated("Invalid email or password");
+        }
+        throw APIError.internal("Login failed");
+      }
+
+      const data = await response.json();
+      
+      return {
+        jwt: data.jwt || data.token || `mock-jwt-${Date.now()}`,
+        message: data.message || "Login successful"
+      };
+    } catch (error: any) {
+      if (error.code) {
+        throw error; // Re-throw APIError
+      }
+      console.error("Login API error:", error);
+      throw APIError.internal("Login service unavailable");
+    }
   }
 );

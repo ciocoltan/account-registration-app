@@ -5,6 +5,7 @@ import backend from '~backend/client';
 interface LoginFormProps {
   onAuthSuccess: () => void;
   onShowRegister: () => void;
+  onShowForgotPassword: () => void;
 }
 
 interface FormErrors {
@@ -12,7 +13,7 @@ interface FormErrors {
   general?: string;
 }
 
-function LoginForm({ onAuthSuccess, onShowRegister }: LoginFormProps) {
+function LoginForm({ onAuthSuccess, onShowRegister, onShowForgotPassword }: LoginFormProps) {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -107,6 +108,16 @@ function LoginForm({ onAuthSuccess, onShowRegister }: LoginFormProps) {
             value={formData.password}
             onChange={(value) => handleInputChange('password', value)}
           />
+        </div>
+        
+        <div className="text-center">
+          <button
+            type="button"
+            onClick={onShowForgotPassword}
+            className="text-sm text-blue-600 hover:text-blue-500 font-medium"
+          >
+            Forgot your password?
+          </button>
         </div>
         
         <div>

@@ -1,4 +1,7 @@
 import { api, APIError } from "encore.dev/api";
+import { secret } from "encore.dev/config";
+
+const syntelliCoreUrl = secret("SyntelliCoreUrl");
 
 export interface RegisterRequest {
   email: string;
@@ -21,17 +24,42 @@ export const register = api<RegisterRequest, RegisterResponse>(
       throw APIError.invalidArgument("Email and password are required");
     }
 
-    // Check if user already exists (mock implementation)
-    if (req.email === "existing@example.com") {
-      throw APIError.alreadyExists("User with this email already exists");
+    try {
+      const response = await fetch(`${syntelliCoreUrl()}/api/register-user`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: req.email,
+          password: req.password,
+          countryId: req.countryId,
+          currency: req.currency,
+        }),
+      });
+
+      if (!response.ok) {
+        if (response.status === 409) {
+          throw APIError.alreadyExists("User with this email already exists");
+        }
+        if (response.status === 400) {
+          throw APIError.invalidArgument("Invalid registration data");
+        }
+        throw APIError.internal("Registration failed");
+      }
+
+      const data = await response.json();
+      
+      return {
+        jwt: data.jwt || data.token || `mock-jwt-${Date.now()}`,
+        message: data.message || "User registered successfully"
+      };
+    } catch (error: any) {
+      if (error.code) {
+        throw error; // Re-throw APIError
+      }
+      console.error("Registration API error:", error);
+      throw APIError.internal("Registration service unavailable");
     }
-
-    // Mock JWT generation
-    const jwt = `mock-jwt-token-${Date.now()}`;
-
-    return {
-      jwt,
-      message: "User registered successfully"
-    };
   }
 );
