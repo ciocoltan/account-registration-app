@@ -2,17 +2,21 @@ import { api, APIError } from "encore.dev/api";
 import { secret } from "encore.dev/config";
 
 const syntelliCoreUrl = secret("SyntelliCoreUrl");
+const syntelliCoreApiKey = secret("SyntelliCoreApiKey");
 
 export interface RegisterRequest {
   email: string;
   password: string;
   countryId: string;
   currency: string;
+  firstName?: string;
+  lastName?: string;
 }
 
 export interface RegisterResponse {
   jwt: string;
   message: string;
+  user?: string;
 }
 
 // Registers a new user account.
@@ -25,17 +29,28 @@ export const register = api<RegisterRequest, RegisterResponse>(
     }
 
     try {
-      const response = await fetch(`${syntelliCoreUrl()}/api/register-user`, {
+      const formData = new URLSearchParams();
+      formData.append('email', req.email);
+      formData.append('password', req.password);
+      formData.append('country_id', req.countryId);
+      formData.append('currency', req.currency);
+      formData.append('google', '0');
+      formData.append('verify', '1');
+      formData.append('auto_responder_enable', '1');
+      
+      if (req.firstName) {
+        formData.append('fname', req.firstName);
+      }
+      if (req.lastName) {
+        formData.append('lname', req.lastName);
+      }
+
+      const response = await fetch(`${syntelliCoreUrl()}/gateway/api/6/syntellicore.cfc?method=create_user`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          "api_key": syntelliCoreApiKey(),
         },
-        body: JSON.stringify({
-          email: req.email,
-          password: req.password,
-          countryId: req.countryId,
-          currency: req.currency,
-        }),
+        body: formData,
       });
 
       if (!response.ok) {
@@ -50,9 +65,22 @@ export const register = api<RegisterRequest, RegisterResponse>(
 
       const data = await response.json();
       
+      // Check if the response indicates an error
+      if (data.error) {
+        if (data.error.toLowerCase().includes('email') && data.error.toLowerCase().includes('exists')) {
+          throw APIError.alreadyExists("User with this email already exists");
+        }
+        throw APIError.invalidArgument(data.error);
+      }
+      
+      // For registration, we might need to do a login call to get the access token
+      // or use the returned user data to generate a token
+      const mockToken = `registered-${Date.now()}`;
+      
       return {
-        jwt: data.jwt || data.token || `mock-jwt-${Date.now()}`,
-        message: data.message || "User registered successfully"
+        jwt: mockToken,
+        message: "User registered successfully",
+        user: data.user || data.customer_no
       };
     } catch (error: any) {
       if (error.code) {

@@ -51,6 +51,12 @@ function LoginForm({ onAuthSuccess, onShowRegister, onShowForgotPassword }: Logi
 
       if (response.jwt) {
         localStorage.setItem('jwt', response.jwt);
+        if (response.user) {
+          localStorage.setItem('user', response.user);
+        }
+        if (response.access_token) {
+          localStorage.setItem('access_token', response.access_token);
+        }
         onAuthSuccess();
       }
     } catch (error: any) {

@@ -2,6 +2,7 @@ import { api, APIError } from "encore.dev/api";
 import { secret } from "encore.dev/config";
 
 const syntelliCoreUrl = secret("SyntelliCoreUrl");
+const syntelliCoreApiKey = secret("SyntelliCoreApiKey");
 
 export interface LoginRequest {
   email: string;
@@ -11,6 +12,8 @@ export interface LoginRequest {
 export interface LoginResponse {
   jwt: string;
   message: string;
+  user?: string;
+  access_token?: string;
 }
 
 // Authenticates a user and returns a JWT token.
@@ -23,19 +26,21 @@ export const login = api<LoginRequest, LoginResponse>(
     }
 
     try {
-      const response = await fetch(`${syntelliCoreUrl()}/api/login`, {
+      const formData = new URLSearchParams();
+      formData.append('email', req.email);
+      formData.append('password', req.password);
+      formData.append('google', '0');
+
+      const response = await fetch(`${syntelliCoreUrl()}/gateway/api/6/syntellicore.cfc?method=user_login`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          "api_key": syntelliCoreApiKey(),
         },
-        body: JSON.stringify({
-          email: req.email,
-          password: req.password,
-        }),
+        body: formData,
       });
 
       if (!response.ok) {
-        if (response.status === 401) {
+        if (response.status === 401 || response.status === 403) {
           throw APIError.unauthenticated("Invalid email or password");
         }
         throw APIError.internal("Login failed");
@@ -43,9 +48,16 @@ export const login = api<LoginRequest, LoginResponse>(
 
       const data = await response.json();
       
+      // Check if the response indicates success
+      if (data.error || !data.access_token) {
+        throw APIError.unauthenticated("Invalid email or password");
+      }
+      
       return {
-        jwt: data.jwt || data.token || `mock-jwt-${Date.now()}`,
-        message: data.message || "Login successful"
+        jwt: data.access_token,
+        message: "Login successful",
+        user: data.user,
+        access_token: data.access_token
       };
     } catch (error: any) {
       if (error.code) {

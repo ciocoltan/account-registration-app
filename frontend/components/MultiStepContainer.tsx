@@ -97,8 +97,21 @@ function MultiStepContainer({ initialStep }: MultiStepContainerProps) {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    const user = localStorage.getItem('user');
+    const access_token = localStorage.getItem('access_token');
+    
+    if (user && access_token) {
+      try {
+        await backend.auth.logout({ user, access_token });
+      } catch (error) {
+        console.error('Logout API call failed:', error);
+      }
+    }
+    
     localStorage.removeItem('jwt');
+    localStorage.removeItem('user');
+    localStorage.removeItem('access_token');
     window.location.reload(); // This will trigger the app to redirect to auth
   };
 
