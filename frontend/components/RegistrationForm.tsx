@@ -76,7 +76,6 @@ function RegistrationForm({ onAuthSuccess, onShowLogin }: RegistrationFormProps)
       const response = await backend.auth.register({
         email: formData.email,
         password: formData.password,
-        countryId: '1', // Default country ID based on the curl example
         currency: 'USD'
       });
 

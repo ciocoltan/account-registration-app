@@ -4,39 +4,31 @@ import { secret } from "encore.dev/config";
 const syntelliCoreUrl = secret("SyntelliCoreUrl");
 const syntelliCoreApiKey = secret("SyntelliCoreApiKey");
 
-export interface LoginRequest {
-  email: string;
-  password: string;
+export interface Country {
+  country_id: string;
+  country_name: string;
+  country_code: string;
 }
 
-export interface LoginResponse {
-  jwt: string;
-  message: string;
-  user?: string;
-  access_token?: string;
+export interface GetCountriesResponse {
+  countries: Country[];
 }
 
-// Authenticates a user and returns a JWT token.
-export const login = api<LoginRequest, LoginResponse>(
-  { expose: true, method: "POST", path: "/api/login" },
-  async (req) => {
-    // Validate input
-    if (!req.email || !req.password) {
-      throw APIError.invalidArgument("Email and password are required");
-    }
-
+// Gets list of available countries from Syntellicore API.
+export const getCountries = api<void, GetCountriesResponse>(
+  { expose: true, method: "GET", path: "/api/countries" },
+  async () => {
     try {
       const formData = new URLSearchParams();
-      formData.append('email', req.email);
-      formData.append('password', req.password);
+      formData.append('language', 'en');
 
-      const requestUrl = `${syntelliCoreUrl()}/gateway/api/1/syntellicore.cfc?method=user_login`;
+      const requestUrl = `${syntelliCoreUrl()}/gateway/api/6/syntellicore.cfc?method=get_countries`;
       const requestHeaders = {
         "api_key": syntelliCoreApiKey(),
       };
 
       // Log the API request details
-      console.log("=== SYNTELLICORE LOGIN API REQUEST ===");
+      console.log("=== SYNTELLICORE GET COUNTRIES API REQUEST ===");
       console.log("URL:", requestUrl);
       console.log("Method: POST");
       console.log("Headers:", JSON.stringify(requestHeaders, null, 2));
@@ -50,7 +42,7 @@ export const login = api<LoginRequest, LoginResponse>(
       });
 
       // Log the response details
-      console.log("=== SYNTELLICORE LOGIN API RESPONSE ===");
+      console.log("=== SYNTELLICORE GET COUNTRIES API RESPONSE ===");
       console.log("Status:", response.status);
       console.log("Status Text:", response.statusText);
       console.log("Response Headers:", Object.fromEntries(response.headers.entries()));
@@ -60,10 +52,7 @@ export const login = api<LoginRequest, LoginResponse>(
 
       if (!response.ok) {
         console.log("Request failed with status:", response.status);
-        if (response.status === 401 || response.status === 403) {
-          throw APIError.unauthenticated("Invalid email or password");
-        }
-        throw APIError.internal("Login failed");
+        throw APIError.internal("Failed to fetch countries");
       }
 
       let data;
@@ -72,36 +61,30 @@ export const login = api<LoginRequest, LoginResponse>(
         console.log("Parsed Response JSON:", JSON.stringify(data, null, 2));
       } catch (parseError) {
         console.log("Failed to parse response as JSON:", parseError);
-        throw APIError.internal("Invalid response format from login service");
+        throw APIError.internal("Invalid response format from countries service");
       }
       
-      // Check if the response indicates success
-      if (data.error || !data.access_token) {
-        console.log("API returned error or missing access_token:", data.error || "No access_token");
-        throw APIError.unauthenticated("Invalid email or password");
-      }
+      // Extract countries from response - adjust this based on actual API response structure
+      const countries = data.countries || data || [];
       
       const successResponse = {
-        jwt: data.access_token,
-        message: "Login successful",
-        user: data.user,
-        access_token: data.access_token
+        countries: Array.isArray(countries) ? countries : []
       };
 
       console.log("Final response:", JSON.stringify(successResponse, null, 2));
-      console.log("=== END SYNTELLICORE LOGIN API ===");
+      console.log("=== END SYNTELLICORE GET COUNTRIES API ===");
 
       return successResponse;
     } catch (error: any) {
-      console.log("=== SYNTELLICORE LOGIN API ERROR ===");
+      console.log("=== SYNTELLICORE GET COUNTRIES API ERROR ===");
       console.log("Error:", error);
       console.log("Error stack:", error.stack);
       
       if (error.code) {
         throw error; // Re-throw APIError
       }
-      console.error("Login API error:", error);
-      throw APIError.internal("Login service unavailable");
+      console.error("Get countries API error:", error);
+      throw APIError.internal("Countries service unavailable");
     }
   }
 );
