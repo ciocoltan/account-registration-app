@@ -53,7 +53,6 @@ export const login = api<LoginRequest, LoginResponse>(
       console.log("=== SYNTELLICORE LOGIN API RESPONSE ===");
       console.log("Status:", response.status);
       console.log("Status Text:", response.statusText);
-      //console.log("Response Headers:", Object.fromEntries(response.headers.entries()));
 
       const responseText = await response.text();
       console.log("Raw Response Body:", responseText);
@@ -75,17 +74,23 @@ export const login = api<LoginRequest, LoginResponse>(
         throw APIError.internal("Invalid response format from login service");
       }
       
-      // Check if the response indicates success
-      if (data.error || !data.authentication_token) {
-        console.log("API returned error or missing access_token:", data.error || "No access_token");
+      // Check if the response indicates success and extract authentication data
+      if (!data.success || !data.data || !Array.isArray(data.data) || data.data.length === 0) {
+        console.log("API returned error or invalid response structure");
+        throw APIError.unauthenticated("Invalid email or password");
+      }
+
+      const userData = data.data[0];
+      if (!userData.authentication_token) {
+        console.log("API returned success but missing authentication_token");
         throw APIError.unauthenticated("Invalid email or password");
       }
       
       const successResponse = {
-        jwt: data.authentication_token,
+        jwt: userData.authentication_token,
         message: "Login successful",
-        user: data.user,
-        access_token: data.authentication_token
+        user: userData.user,
+        access_token: userData.authentication_token
       };
 
       console.log("Final response:", JSON.stringify(successResponse, null, 2));
