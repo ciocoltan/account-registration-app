@@ -11,8 +11,6 @@ interface RegistrationFormProps {
 interface FormErrors {
   email?: string;
   password?: string;
-  firstName?: string;
-  lastName?: string;
   privacy?: string;
   general?: string;
 }
@@ -21,8 +19,6 @@ function RegistrationForm({ onAuthSuccess, onShowLogin }: RegistrationFormProps)
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    firstName: '',
-    lastName: '',
     privacyPolicy: false,
     marketingComms: false,
   });
@@ -53,8 +49,6 @@ function RegistrationForm({ onAuthSuccess, onShowLogin }: RegistrationFormProps)
     setFormData(prev => ({ ...prev, [field]: value }));
     if (field === 'email') clearError('email');
     if (field === 'password') clearError('password');
-    if (field === 'firstName') clearError('firstName');
-    if (field === 'lastName') clearError('lastName');
     if (field === 'privacyPolicy') clearError('privacy');
     clearError('general');
   };
@@ -64,8 +58,6 @@ function RegistrationForm({ onAuthSuccess, onShowLogin }: RegistrationFormProps)
     
     if (!formData.email) newErrors.email = 'E-mail is required';
     if (!formData.password) newErrors.password = 'Password is required';
-    if (!formData.firstName) newErrors.firstName = 'First name is required';
-    if (!formData.lastName) newErrors.lastName = 'Last name is required';
     if (!formData.privacyPolicy) newErrors.privacy = 'Agreeing to the Privacy Policy is required';
 
     setErrors(newErrors);
@@ -84,10 +76,8 @@ function RegistrationForm({ onAuthSuccess, onShowLogin }: RegistrationFormProps)
       const response = await backend.auth.register({
         email: formData.email,
         password: formData.password,
-        countryId: '479', // Default to Moldova
-        currency: 'USD',
-        firstName: formData.firstName,
-        lastName: formData.lastName
+        countryId: '1', // Default country ID based on the curl example
+        currency: 'USD'
       });
 
       if (response.jwt) {
@@ -143,45 +133,6 @@ function RegistrationForm({ onAuthSuccess, onShowLogin }: RegistrationFormProps)
         </div>
         
         <form onSubmit={handleSubmit} className="mt-8 space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
-                First Name
-              </label>
-              <input
-                id="firstName"
-                type="text"
-                value={formData.firstName}
-                onChange={(e) => handleInputChange('firstName', e.target.value)}
-                className={`form-input custom-bg-input block w-full border rounded-lg py-3 px-4 focus:outline-none sm:text-sm ${
-                  errors.firstName ? 'border-red-500' : 'border-gray-300'
-                }`}
-                style={{ backgroundColor: 'rgb(248, 249, 250)' }}
-              />
-              {errors.firstName && (
-                <p className="text-red-500 text-sm mt-1">{errors.firstName}</p>
-              )}
-            </div>
-            <div>
-              <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
-                Last Name
-              </label>
-              <input
-                id="lastName"
-                type="text"
-                value={formData.lastName}
-                onChange={(e) => handleInputChange('lastName', e.target.value)}
-                className={`form-input custom-bg-input block w-full border rounded-lg py-3 px-4 focus:outline-none sm:text-sm ${
-                  errors.lastName ? 'border-red-500' : 'border-gray-300'
-                }`}
-                style={{ backgroundColor: 'rgb(248, 249, 250)' }}
-              />
-              {errors.lastName && (
-                <p className="text-red-500 text-sm mt-1">{errors.lastName}</p>
-              )}
-            </div>
-          </div>
-          
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
               E-mail

@@ -9,8 +9,6 @@ export interface RegisterRequest {
   password: string;
   countryId: string;
   currency: string;
-  firstName?: string;
-  lastName?: string;
 }
 
 export interface RegisterResponse {
@@ -34,26 +32,37 @@ export const register = api<RegisterRequest, RegisterResponse>(
       formData.append('password', req.password);
       formData.append('country_id', req.countryId);
       formData.append('currency', req.currency);
-      formData.append('google', '0');
-      formData.append('verify', '1');
-      formData.append('auto_responder_enable', '1');
-      
-      if (req.firstName) {
-        formData.append('fname', req.firstName);
-      }
-      if (req.lastName) {
-        formData.append('lname', req.lastName);
-      }
 
-      const response = await fetch(`${syntelliCoreUrl()}/gateway/api/6/syntellicore.cfc?method=create_user`, {
+      const requestUrl = `${syntelliCoreUrl()}/gateway/api/6/syntellicore.cfc?method=create_user`;
+      const requestHeaders = {
+        "api_key": syntelliCoreApiKey(),
+      };
+
+      // Log the API request details
+      console.log("=== SYNTELLICORE REGISTER API REQUEST ===");
+      console.log("URL:", requestUrl);
+      console.log("Method: POST");
+      console.log("Headers:", JSON.stringify(requestHeaders, null, 2));
+      console.log("Body (FormData):", Object.fromEntries(formData.entries()));
+      console.log("Raw FormData string:", formData.toString());
+
+      const response = await fetch(requestUrl, {
         method: "POST",
-        headers: {
-          "api_key": syntelliCoreApiKey(),
-        },
+        headers: requestHeaders,
         body: formData,
       });
 
+      // Log the response details
+      console.log("=== SYNTELLICORE REGISTER API RESPONSE ===");
+      console.log("Status:", response.status);
+      console.log("Status Text:", response.statusText);
+      console.log("Response Headers:", Object.fromEntries(response.headers.entries()));
+
+      const responseText = await response.text();
+      console.log("Raw Response Body:", responseText);
+
       if (!response.ok) {
+        console.log("Request failed with status:", response.status);
         if (response.status === 409) {
           throw APIError.alreadyExists("User with this email already exists");
         }
@@ -63,10 +72,18 @@ export const register = api<RegisterRequest, RegisterResponse>(
         throw APIError.internal("Registration failed");
       }
 
-      const data = await response.json();
+      let data;
+      try {
+        data = JSON.parse(responseText);
+        console.log("Parsed Response JSON:", JSON.stringify(data, null, 2));
+      } catch (parseError) {
+        console.log("Failed to parse response as JSON:", parseError);
+        throw APIError.internal("Invalid response format from registration service");
+      }
       
       // Check if the response indicates an error
       if (data.error) {
+        console.log("API returned error:", data.error);
         if (data.error.toLowerCase().includes('email') && data.error.toLowerCase().includes('exists')) {
           throw APIError.alreadyExists("User with this email already exists");
         }
@@ -77,12 +94,21 @@ export const register = api<RegisterRequest, RegisterResponse>(
       // or use the returned user data to generate a token
       const mockToken = `registered-${Date.now()}`;
       
-      return {
+      const successResponse = {
         jwt: mockToken,
         message: "User registered successfully",
         user: data.user || data.customer_no
       };
+
+      console.log("Final response:", JSON.stringify(successResponse, null, 2));
+      console.log("=== END SYNTELLICORE REGISTER API ===");
+
+      return successResponse;
     } catch (error: any) {
+      console.log("=== SYNTELLICORE REGISTER API ERROR ===");
+      console.log("Error:", error);
+      console.log("Error stack:", error.stack);
+      
       if (error.code) {
         throw error; // Re-throw APIError
       }
