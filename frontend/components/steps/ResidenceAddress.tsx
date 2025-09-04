@@ -58,7 +58,7 @@ function ResidenceAddress({ formData, onSaveData, onNext }: ResidenceAddressProp
         <select
           id="residence-country"
           name="residenceCountry"
-          value={localData.residenceCountry as string || 'Israel'}
+          value={'Israel'}
           onChange={(e) => handleInputChange('residenceCountry', e.target.value)}
           className="form-input custom-bg-input mt-1 block w-full border rounded-lg py-2 px-3 focus:outline-none sm:text-sm"
           style={{ backgroundColor: 'rgb(248, 249, 250)' }}
