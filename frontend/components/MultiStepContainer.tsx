@@ -1,99 +1,52 @@
 import React, { useState, useEffect } from 'react';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import Stepper from './Stepper';
-import StepContent from './StepContent';
 import LogoutButton from './LogoutButton';
 import backend from '~backend/client';
 
-interface MultiStepContainerProps {
-  initialStep: number;
-}
+const stepFlow = [
+  'personal-details', 'residence-address', 'public-official-status',
+  'employment-status', 'industry', 'annual-income', 'available-to-invest', 'plan-to-invest', 'investment-source',
+  'professional-experience', 'risk-tolerance', 'trading-objective',
+  'verification'
+];
 
-export interface FormData {
-  [key: string]: string | boolean;
-}
+const stepDetails: Record<string, { mainStep: number, subStep: number }> = {
+  'personal-details': { mainStep: 1, subStep: 0 },
+  'residence-address': { mainStep: 1, subStep: 1 },
+  'public-official-status': { mainStep: 1, subStep: 2 },
+  'employment-status': { mainStep: 2, subStep: 0 },
+  'industry': { mainStep: 2, subStep: 1 },
+  'annual-income': { mainStep: 2, subStep: 2 },
+  'available-to-invest': { mainStep: 2, subStep: 3 },
+  'plan-to-invest': { mainStep: 2, subStep: 4 },
+  'investment-source': { mainStep: 2, subStep: 5 },
+  'professional-experience': { mainStep: 3, subStep: 0 },
+  'risk-tolerance': { mainStep: 3, subStep: 1 },
+  'trading-objective': { mainStep: 3, subStep: 2 },
+  'verification': { mainStep: 4, subStep: 0 },
+};
 
-const stepFlow = ['1-0', '1-1', '1-2', '2-0', '2-1', '2-2', '2-3', '2-4', '2-5', '3-0', '3-1', '3-2', '4-0'];
 const substepsPerStep: Record<string, number> = { '1': 3, '2': 6, '3': 3, '4': 1 };
 
-function MultiStepContainer({ initialStep }: MultiStepContainerProps) {
-  const [formData, setFormData] = useState<FormData>({});
-  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+function MultiStepContainer() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [highestMainStepReached, setHighestMainStepReached] = useState(1);
 
+  const currentPath = location.pathname.split('/').pop() || stepFlow[0];
+  const currentStepInfo = stepDetails[currentPath] || stepDetails[stepFlow[0]];
+
   useEffect(() => {
-    const stepMap = [0, 0, 3, 9, 12]; // API step to flow index mapping
-    const mappedIndex = stepMap[initialStep] || 0;
-    setCurrentStepIndex(mappedIndex);
-    setHighestMainStepReached(Math.max(1, initialStep));
-  }, [initialStep]);
-
-  const saveStepData = (data: FormData) => {
-    setFormData(prev => ({ ...prev, ...data }));
-  };
-
-  const saveCurrentStepToBackend = async (stepId: string, data: FormData) => {
-    const jwt = localStorage.getItem('jwt');
-    if (!jwt) return;
-
-    try {
-      // Save data based on step
-      if (stepId.startsWith('1-')) {
-        // Ensure required fields have default values for step 1
-        const step1Data = {
-          residenceCountry: data.residenceCountry || 'Israel',
-          notUsCitizen: data.notUsCitizen || false,
-          agreedToTerms: data.agreedToTerms || false,
-          publicOfficialStatus: data.publicOfficialStatus || 'None of the above',
-          ...data // Include all other data
-        };
-        await backend.onboarding.saveStep1({ data: step1Data });
-      } else if (stepId.startsWith('2-')) {
-        await backend.onboarding.saveStep2({ data });
-      } else if (stepId.startsWith('3-')) {
-        await backend.onboarding.saveStep3({ data });
-      }
-    } catch (error) {
-      console.error(`Error saving ${stepId} data:`, error);
-    }
-  };
-
-  const goToNextStep = async () => {
-    const currentStepId = stepFlow[currentStepIndex];
-    
-    // Save current step data to backend
-    await saveCurrentStepToBackend(currentStepId, formData);
-
-    if (currentStepIndex < stepFlow.length - 1) {
-      const nextIndex = currentStepIndex + 1;
-      const newMainStep = parseInt(stepFlow[nextIndex].split('-')[0]);
-      
-      setCurrentStepIndex(nextIndex);
-      setHighestMainStepReached(Math.max(highestMainStepReached, newMainStep));
-    }
-  };
+    setHighestMainStepReached(prev => Math.max(prev, currentStepInfo.mainStep));
+  }, [currentStepInfo.mainStep]);
 
   const goToStep = (step: number) => {
     if (step <= highestMainStepReached) {
-      const stepMap = [0, 0, 3, 9, 12];
-      const targetIndex = stepMap[step] || stepFlow.findIndex(s => s.startsWith(step + '-'));
-      if (targetIndex !== -1) {
-        setCurrentStepIndex(targetIndex);
+      const targetPath = stepFlow.find(path => stepDetails[path].mainStep === step && stepDetails[path].subStep === 0);
+      if (targetPath) {
+        navigate(`/en/apply/${targetPath}`);
       }
-    }
-  };
-
-  const initiateKyc = async () => {
-    const jwt = localStorage.getItem('jwt');
-    if (!jwt) return;
-
-    try {
-      const response = await backend.kyc.initiate();
-      console.log('KYC Access Token:', response.accessToken);
-      alert('KYC process initiated. Check console for token.');
-      // Here you would initialize the Sumsub SDK with the token
-    } catch (error) {
-      console.error('KYC initiation failed:', error);
-      alert('Failed to initiate KYC.');
     }
   };
 
@@ -112,32 +65,23 @@ function MultiStepContainer({ initialStep }: MultiStepContainerProps) {
     localStorage.removeItem('jwt');
     localStorage.removeItem('user');
     localStorage.removeItem('access_token');
-    window.location.reload(); // This will trigger the app to redirect to auth
+    window.location.reload();
   };
-
-  const currentStepId = stepFlow[currentStepIndex];
-  const [mainStep, subStep] = currentStepId.split('-').map(Number);
 
   return (
     <div className="bg-white p-12 rounded-xl w-full max-w-3xl border border-gray-200 relative">
       <LogoutButton onLogout={handleLogout} />
       
       <Stepper
-        currentMainStep={mainStep}
-        currentSubStep={subStep}
+        currentMainStep={currentStepInfo.mainStep}
+        currentSubStep={currentStepInfo.subStep}
         substepsPerStep={substepsPerStep}
         highestMainStepReached={highestMainStepReached}
         onStepClick={goToStep}
       />
       
       <div className="max-w-md mx-auto">
-        <StepContent
-          stepId={currentStepId}
-          formData={formData}
-          onSaveData={saveStepData}
-          onNext={goToNextStep}
-          onInitiateKyc={initiateKyc}
-        />
+        <Outlet />
       </div>
     </div>
   );

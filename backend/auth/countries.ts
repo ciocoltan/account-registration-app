@@ -5,9 +5,16 @@ const syntelliCoreUrl = secret("SyntelliCoreUrl");
 const syntelliCoreApiKey = secret("SyntelliCoreApiKey");
 
 export interface Country {
-  country_id: string;
-  country_name: string;
-  country_code: string;
+  country_id: number;
+  name: string;
+  iso_alpha2_code: string;
+  iso_alpha3_code: string;
+  tel_country_code: string;
+  show_on_register: number;
+  currency: string;
+  currency_id: number;
+  brand_id: number;
+  zone: string;
 }
 
 export interface GetCountriesResponse {
@@ -21,6 +28,7 @@ export const getCountries = api<void, GetCountriesResponse>(
     try {
       const formData = new URLSearchParams();
       formData.append('language', 'en');
+      formData.append('show_on_register', '1');
 
       const requestUrl = `${syntelliCoreUrl()}/gateway/api/6/syntellicore.cfc?method=get_countries`;
       const requestHeaders = {
@@ -45,8 +53,7 @@ export const getCountries = api<void, GetCountriesResponse>(
       console.log("=== SYNTELLICORE GET COUNTRIES API RESPONSE ===");
       console.log("Status:", response.status);
       console.log("Status Text:", response.statusText);
-      console.log("Response Headers:", Object.fromEntries(response.headers.entries()));
-
+      
       const responseText = await response.text();
       console.log("Raw Response Body:", responseText);
 
@@ -64,8 +71,7 @@ export const getCountries = api<void, GetCountriesResponse>(
         throw APIError.internal("Invalid response format from countries service");
       }
       
-      // Extract countries from response - adjust this based on actual API response structure
-      const countries = data.countries || data || [];
+      const countries = data.data || [];
       
       const successResponse = {
         countries: Array.isArray(countries) ? countries : []

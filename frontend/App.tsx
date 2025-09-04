@@ -1,15 +1,25 @@
 import React, { useEffect, useState } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AuthContainer from './components/AuthContainer';
 import MultiStepContainer from './components/MultiStepContainer';
+import PersonalDetails from './components/steps/PersonalDetails';
+import ResidenceAddress from './components/steps/ResidenceAddress';
+import PublicOfficialStatus from './components/steps/PublicOfficialStatus';
+import EmploymentStatus from './components/steps/EmploymentStatus';
+import Industry from './components/steps/Industry';
+import AnnualIncome from './components/steps/AnnualIncome';
+import AvailableToInvest from './components/steps/AvailableToInvest';
+import PlanToInvest from './components/steps/PlanToInvest';
+import InvestmentSource from './components/steps/InvestmentSource';
+import ProfessionalExperience from './components/steps/ProfessionalExperience';
+import RiskTolerance from './components/steps/RiskTolerance';
+import TradingObjective from './components/steps/TradingObjective';
+import VerificationStep from './components/steps/VerificationStep';
+import Spinner from './components/Spinner';
 import backend from '~backend/client';
-
-interface OnboardingStatus {
-  userCurrentStep?: number;
-}
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [currentStep, setCurrentStep] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -20,9 +30,9 @@ function App() {
     const jwt = localStorage.getItem('jwt');
     if (jwt) {
       try {
-        const response = await backend.onboarding.getStatus();
+        // A simple check if the token is present.
+        // A more robust solution would be to have a /me endpoint to verify the token.
         setIsAuthenticated(true);
-        setCurrentStep(response.userCurrentStep || 0);
       } catch (error) {
         console.error('Session check failed:', error);
         localStorage.removeItem('jwt');
@@ -41,19 +51,39 @@ function App() {
   if (isLoading) {
     return (
       <div className="bg-white flex items-center justify-center min-h-screen">
-        <div className="text-gray-600">Loading...</div>
+        <Spinner />
       </div>
     );
   }
 
   return (
-    <div className="bg-white flex items-center justify-center min-h-screen p-4 overflow-hidden">
-      {!isAuthenticated ? (
-        <AuthContainer onAuthSuccess={onAuthSuccess} />
-      ) : (
-        <MultiStepContainer initialStep={currentStep} />
-      )}
-    </div>
+    <BrowserRouter>
+      <div className="bg-white flex items-center justify-center min-h-screen p-4 overflow-hidden">
+        {!isAuthenticated ? (
+          <AuthContainer onAuthSuccess={onAuthSuccess} />
+        ) : (
+          <Routes>
+            <Route path="/en/apply" element={<MultiStepContainer />}>
+              <Route index element={<Navigate to="personal-details" replace />} />
+              <Route path="personal-details" element={<PersonalDetails />} />
+              <Route path="residence-address" element={<ResidenceAddress />} />
+              <Route path="public-official-status" element={<PublicOfficialStatus />} />
+              <Route path="employment-status" element={<EmploymentStatus />} />
+              <Route path="industry" element={<Industry />} />
+              <Route path="annual-income" element={<AnnualIncome />} />
+              <Route path="available-to-invest" element={<AvailableToInvest />} />
+              <Route path="plan-to-invest" element={<PlanToInvest />} />
+              <Route path="investment-source" element={<InvestmentSource />} />
+              <Route path="professional-experience" element={<ProfessionalExperience />} />
+              <Route path="risk-tolerance" element={<RiskTolerance />} />
+              <Route path="trading-objective" element={<TradingObjective />} />
+              <Route path="verification" element={<VerificationStep />} />
+            </Route>
+            <Route path="*" element={<Navigate to="/en/apply" />} />
+          </Routes>
+        )}
+      </div>
+    </BrowserRouter>
   );
 }
 
