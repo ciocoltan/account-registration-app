@@ -161,8 +161,7 @@ export const register = api<RegisterRequest, RegisterResponse>(
       // Log the API request details
       console.log("=== SYNTELLICORE REGISTER API REQUEST ===");
       console.log("URL:", requestUrl);
-      console.log("Raw FormData string:", formData.toString());
-
+      
       const response = await fetch(requestUrl, {
         method: "POST",
         headers: requestHeaders,
