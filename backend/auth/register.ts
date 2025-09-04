@@ -232,13 +232,6 @@ export const register = api<RegisterRequest, RegisterResponse>(
     console.log(`Error: ${error.message || error}`);
     throw APIError.internal("Registration service unavailable");
   }
-      // console.log("Error:", error);
-      
-      // if (error.code) {
-      //   throw error; // Re-throw APIError
-      // }
-      // console.error("Registration API error:", error);
-      // throw APIError.internal("Registration service unavailable");
     }
   }
 );
