@@ -225,13 +225,20 @@ export const register = api<RegisterRequest, RegisterResponse>(
       return successResponse;
     } catch (error: any) {
       console.log("=== SYNTELLICORE REGISTER API ERROR ===");
-      console.log("Error:", error);
+			if (error instanceof APIError) {
+    console.log(`Error: APIError: ${error.message}`);
+    throw error; // re-throw to keep the correct response
+  } else {
+    console.log(`Error: ${error.message || error}`);
+    throw APIError.internal("Registration service unavailable");
+  }
+      // console.log("Error:", error);
       
-      if (error.code) {
-        throw error; // Re-throw APIError
-      }
-      console.error("Registration API error:", error);
-      throw APIError.internal("Registration service unavailable");
+      // if (error.code) {
+      //   throw error; // Re-throw APIError
+      // }
+      // console.error("Registration API error:", error);
+      // throw APIError.internal("Registration service unavailable");
     }
   }
 );
