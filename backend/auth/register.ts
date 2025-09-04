@@ -226,7 +226,6 @@ export const register = api<RegisterRequest, RegisterResponse>(
     } catch (error: any) {
       console.log("=== SYNTELLICORE REGISTER API ERROR ===");
       console.log("Error:", error);
-      console.log("Error stack:", error.stack);
       
       if (error.code) {
         throw error; // Re-throw APIError
