@@ -176,12 +176,6 @@ export const register = api<RegisterRequest, RegisterResponse>(
 
       if (!response.ok) {
         console.log("Request failed with status:", response.status);
-        if (response.status === 409) {
-          throw APIError.alreadyExists("User with this email already exists");
-        }
-        if (response.status === 400) {
-          throw APIError.invalidArgument("Invalid registration data");
-        }
         throw APIError.internal("Registration failed");
       }
 
