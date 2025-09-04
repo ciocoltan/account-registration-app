@@ -36,10 +36,7 @@ export const logout = api<LogoutRequest, LogoutResponse>(
       // Log the API request details
       console.log("=== SYNTELLICORE LOGOUT API REQUEST ===");
       console.log("URL:", requestUrl);
-      console.log("Method: POST");
-      console.log("Headers:", JSON.stringify(requestHeaders, null, 2));
       console.log("Body (FormData):", Object.fromEntries(formData.entries()));
-      console.log("Raw FormData string:", formData.toString());
 
       const response = await fetch(requestUrl, {
         method: "POST",
@@ -49,9 +46,6 @@ export const logout = api<LogoutRequest, LogoutResponse>(
 
       // Log the response details
       console.log("=== SYNTELLICORE LOGOUT API RESPONSE ===");
-      console.log("Status:", response.status);
-      console.log("Status Text:", response.statusText);
-      console.log("Response Headers:", Object.fromEntries(response.headers.entries()));
 
       const responseText = await response.text();
       console.log("Raw Response Body:", responseText);
@@ -64,7 +58,6 @@ export const logout = api<LogoutRequest, LogoutResponse>(
       let data;
       try {
         data = JSON.parse(responseText);
-        console.log("Parsed Response JSON:", JSON.stringify(data, null, 2));
       } catch (parseError) {
         console.log("Failed to parse response as JSON:", parseError);
         // For logout, we can still return success even if parsing fails
@@ -76,7 +69,6 @@ export const logout = api<LogoutRequest, LogoutResponse>(
         success: true
       };
 
-      console.log("Final response:", JSON.stringify(successResponse, null, 2));
       console.log("=== END SYNTELLICORE LOGOUT API ===");
 
       return successResponse;
