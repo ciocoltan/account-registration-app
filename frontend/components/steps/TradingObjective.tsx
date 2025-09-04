@@ -1,16 +1,28 @@
 import React from 'react';
-import { FormData } from '../MultiStepContainer';
+import { useNavigate } from 'react-router-dom';
 
-interface TradingObjectiveProps {
-  formData: FormData;
-  onSaveData: (data: FormData) => void;
-  onNext: () => void;
+interface FormData {
+  [key: string]: string | boolean;
 }
 
-function TradingObjective({ formData, onSaveData, onNext }: TradingObjectiveProps) {
+interface TradingObjectiveProps {
+  formData?: FormData;
+  onSaveData?: (data: FormData) => void;
+  onNext?: () => void;
+}
+
+function TradingObjective({ formData = {}, onSaveData, onNext }: TradingObjectiveProps) {
+  const navigate = useNavigate();
+
   const handleOptionClick = (value: string) => {
-    onSaveData({ tradingObjective: value });
-    setTimeout(onNext, 200);
+    onSaveData?.({ tradingObjective: value });
+    setTimeout(() => {
+      if (onNext) {
+        onNext();
+      } else {
+        navigate('/en/apply/verification');
+      }
+    }, 200);
   };
 
   const options = [

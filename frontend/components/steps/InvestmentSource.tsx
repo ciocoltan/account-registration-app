@@ -1,16 +1,28 @@
 import React from 'react';
-import { FormData } from '../MultiStepContainer';
+import { useNavigate } from 'react-router-dom';
 
-interface InvestmentSourceProps {
-  formData: FormData;
-  onSaveData: (data: FormData) => void;
-  onNext: () => void;
+interface FormData {
+  [key: string]: string | boolean;
 }
 
-function InvestmentSource({ formData, onSaveData, onNext }: InvestmentSourceProps) {
+interface InvestmentSourceProps {
+  formData?: FormData;
+  onSaveData?: (data: FormData) => void;
+  onNext?: () => void;
+}
+
+function InvestmentSource({ formData = {}, onSaveData, onNext }: InvestmentSourceProps) {
+  const navigate = useNavigate();
+
   const handleOptionClick = (value: string) => {
-    onSaveData({ investmentSource: value });
-    setTimeout(onNext, 200);
+    onSaveData?.({ investmentSource: value });
+    setTimeout(() => {
+      if (onNext) {
+        onNext();
+      } else {
+        navigate('/en/apply/professional-experience');
+      }
+    }, 200);
   };
 
   const options = [

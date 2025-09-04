@@ -1,16 +1,28 @@
 import React from 'react';
-import { FormData } from '../MultiStepContainer';
+import { useNavigate } from 'react-router-dom';
 
-interface PlanToInvestProps {
-  formData: FormData;
-  onSaveData: (data: FormData) => void;
-  onNext: () => void;
+interface FormData {
+  [key: string]: string | boolean;
 }
 
-function PlanToInvest({ formData, onSaveData, onNext }: PlanToInvestProps) {
+interface PlanToInvestProps {
+  formData?: FormData;
+  onSaveData?: (data: FormData) => void;
+  onNext?: () => void;
+}
+
+function PlanToInvest({ formData = {}, onSaveData, onNext }: PlanToInvestProps) {
+  const navigate = useNavigate();
+
   const handleOptionClick = (value: string) => {
-    onSaveData({ planToInvest: value });
-    setTimeout(onNext, 200);
+    onSaveData?.({ planToInvest: value });
+    setTimeout(() => {
+      if (onNext) {
+        onNext();
+      } else {
+        navigate('/en/apply/investment-source');
+      }
+    }, 200);
   };
 
   const options = [

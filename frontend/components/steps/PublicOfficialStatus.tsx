@@ -1,13 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { FormData } from '../MultiStepContainer';
+import { useNavigate } from 'react-router-dom';
 
-interface PublicOfficialStatusProps {
-  formData: FormData;
-  onSaveData: (data: FormData) => void;
-  onNext: () => void;
+interface FormData {
+  [key: string]: string | boolean;
 }
 
-function PublicOfficialStatus({ formData, onSaveData, onNext }: PublicOfficialStatusProps) {
+interface PublicOfficialStatusProps {
+  formData?: FormData;
+  onSaveData?: (data: FormData) => void;
+  onNext?: () => void;
+}
+
+function PublicOfficialStatus({ formData = {}, onSaveData, onNext }: PublicOfficialStatusProps) {
+  const navigate = useNavigate();
   const [localData, setLocalData] = useState<FormData>(formData);
 
   useEffect(() => {
@@ -17,11 +22,15 @@ function PublicOfficialStatus({ formData, onSaveData, onNext }: PublicOfficialSt
   const handleInputChange = (name: string, value: string | boolean) => {
     const newData = { ...localData, [name]: value };
     setLocalData(newData);
-    onSaveData(newData);
+    onSaveData?.(newData);
   };
 
   const handleNext = () => {
-    onNext();
+    if (onNext) {
+      onNext();
+    } else {
+      navigate('/en/apply/employment-status');
+    }
   };
 
   return (

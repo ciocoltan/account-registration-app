@@ -1,16 +1,28 @@
 import React from 'react';
-import { FormData } from '../MultiStepContainer';
+import { useNavigate } from 'react-router-dom';
 
-interface EmploymentStatusProps {
-  formData: FormData;
-  onSaveData: (data: FormData) => void;
-  onNext: () => void;
+interface FormData {
+  [key: string]: string | boolean;
 }
 
-function EmploymentStatus({ formData, onSaveData, onNext }: EmploymentStatusProps) {
+interface EmploymentStatusProps {
+  formData?: FormData;
+  onSaveData?: (data: FormData) => void;
+  onNext?: () => void;
+}
+
+function EmploymentStatus({ formData = {}, onSaveData, onNext }: EmploymentStatusProps) {
+  const navigate = useNavigate();
+
   const handleOptionClick = (value: string) => {
-    onSaveData({ employmentStatus: value });
-    setTimeout(onNext, 200);
+    onSaveData?.({ employmentStatus: value });
+    setTimeout(() => {
+      if (onNext) {
+        onNext();
+      } else {
+        navigate('/en/apply/industry');
+      }
+    }, 200);
   };
 
   const options = [

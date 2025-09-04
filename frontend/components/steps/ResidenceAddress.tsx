@@ -1,13 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { FormData } from '../MultiStepContainer';
+import { useNavigate } from 'react-router-dom';
 
-interface ResidenceAddressProps {
-  formData: FormData;
-  onSaveData: (data: FormData) => void;
-  onNext: () => void;
+interface FormData {
+  [key: string]: string | boolean;
 }
 
-function ResidenceAddress({ formData, onSaveData, onNext }: ResidenceAddressProps) {
+interface ResidenceAddressProps {
+  formData?: FormData;
+  onSaveData?: (data: FormData) => void;
+  onNext?: () => void;
+}
+
+function ResidenceAddress({ formData = {}, onSaveData, onNext }: ResidenceAddressProps) {
+  const navigate = useNavigate();
   const [localData, setLocalData] = useState<FormData>(formData);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -18,7 +23,7 @@ function ResidenceAddress({ formData, onSaveData, onNext }: ResidenceAddressProp
   const handleInputChange = (name: string, value: string | boolean) => {
     const newData = { ...localData, [name]: value };
     setLocalData(newData);
-    onSaveData(newData);
+    onSaveData?.(newData);
     
     // Clear error when user starts typing
     if (errors[name]) {
@@ -41,7 +46,11 @@ function ResidenceAddress({ formData, onSaveData, onNext }: ResidenceAddressProp
 
   const handleNext = () => {
     if (validateStep()) {
-      onNext();
+      if (onNext) {
+        onNext();
+      } else {
+        navigate('/en/apply/public-official-status');
+      }
     }
   };
 
@@ -58,7 +67,7 @@ function ResidenceAddress({ formData, onSaveData, onNext }: ResidenceAddressProp
         <select
           id="residence-country"
           name="residenceCountry"
-          value={''}
+          value={localData.residenceCountry as string || 'Israel'}
           onChange={(e) => handleInputChange('residenceCountry', e.target.value)}
           className="form-input custom-bg-input mt-1 block w-full border rounded-lg py-2 px-3 focus:outline-none sm:text-sm"
           style={{ backgroundColor: 'rgb(248, 249, 250)' }}

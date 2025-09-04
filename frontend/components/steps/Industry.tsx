@@ -1,16 +1,28 @@
 import React from 'react';
-import { FormData } from '../MultiStepContainer';
+import { useNavigate } from 'react-router-dom';
 
-interface IndustryProps {
-  formData: FormData;
-  onSaveData: (data: FormData) => void;
-  onNext: () => void;
+interface FormData {
+  [key: string]: string | boolean;
 }
 
-function Industry({ formData, onSaveData, onNext }: IndustryProps) {
+interface IndustryProps {
+  formData?: FormData;
+  onSaveData?: (data: FormData) => void;
+  onNext?: () => void;
+}
+
+function Industry({ formData = {}, onSaveData, onNext }: IndustryProps) {
+  const navigate = useNavigate();
+
   const handleOptionClick = (value: string) => {
-    onSaveData({ industry: value });
-    setTimeout(onNext, 200);
+    onSaveData?.({ industry: value });
+    setTimeout(() => {
+      if (onNext) {
+        onNext();
+      } else {
+        navigate('/en/apply/annual-income');
+      }
+    }, 200);
   };
 
   const options = [

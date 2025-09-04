@@ -1,16 +1,28 @@
 import React from 'react';
-import { FormData } from '../MultiStepContainer';
+import { useNavigate } from 'react-router-dom';
 
-interface ProfessionalExperienceProps {
-  formData: FormData;
-  onSaveData: (data: FormData) => void;
-  onNext: () => void;
+interface FormData {
+  [key: string]: string | boolean;
 }
 
-function ProfessionalExperience({ formData, onSaveData, onNext }: ProfessionalExperienceProps) {
+interface ProfessionalExperienceProps {
+  formData?: FormData;
+  onSaveData?: (data: FormData) => void;
+  onNext?: () => void;
+}
+
+function ProfessionalExperience({ formData = {}, onSaveData, onNext }: ProfessionalExperienceProps) {
+  const navigate = useNavigate();
+
   const handleOptionClick = (value: string) => {
-    onSaveData({ professionalExperience: value });
-    setTimeout(onNext, 200);
+    onSaveData?.({ professionalExperience: value });
+    setTimeout(() => {
+      if (onNext) {
+        onNext();
+      } else {
+        navigate('/en/apply/risk-tolerance');
+      }
+    }, 200);
   };
 
   const options = [

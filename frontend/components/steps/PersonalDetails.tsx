@@ -154,17 +154,10 @@ function PersonalDetails() {
   const years = Array.from({ length: 100 }, (_, i) => (currentYear - 18) - i);
 
   return (
-    <div className="space-y-3">
-      {isSubmitting && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-          <div className="bg-white p-8 rounded-lg shadow-xl">
-            <Spinner />
-            <p className="text-center mt-4 text-gray-700">Saving your details...</p>
-          </div>
-        </div>
-      )}
+    <>
+      {isSubmitting && <Spinner overlay />}
       
-      <div className={`transition-all duration-300 ${isSubmitting ? 'filter blur-sm pointer-events-none' : ''}`}>
+      <div className="space-y-3">
         <h2 className="text-2xl font-bold text-center text-gray-800">Personal Details</h2>
         <p className="text-center text-gray-500 pb-4">Must match details on your ID / passport</p>
         
@@ -178,6 +171,7 @@ function PersonalDetails() {
             onKeyDown={(e) => handleKeyDown(e, 'first-name')}
             className="form-input custom-bg-input mt-1 block w-full border rounded-lg py-2 px-3 focus:outline-none sm:text-sm"
             style={{ backgroundColor: 'rgb(248, 249, 250)' }}
+            disabled={isSubmitting}
           >
             <option>Mr</option>
             <option>Ms/Mrs/Miss</option>
@@ -198,6 +192,7 @@ function PersonalDetails() {
               className={`form-input custom-bg-input mt-1 block w-full border rounded-lg py-2 px-3 focus:outline-none sm:text-sm ${errors['first-name'] ? 'border-red-500' : ''}`}
               style={{ backgroundColor: 'rgb(248, 249, 250)' }}
               placeholder="First name"
+              disabled={isSubmitting}
             />
             {errors['first-name'] && <p className="text-red-500 text-sm mt-1">{errors['first-name']}</p>}
           </div>
@@ -213,6 +208,7 @@ function PersonalDetails() {
               className={`form-input custom-bg-input mt-1 block w-full border rounded-lg py-2 px-3 focus:outline-none sm:text-sm ${errors['last-name'] ? 'border-red-500' : ''}`}
               style={{ backgroundColor: 'rgb(248, 249, 250)' }}
               placeholder="Last name"
+              disabled={isSubmitting}
             />
             {errors['last-name'] && <p className="text-red-500 text-sm mt-1">{errors['last-name']}</p>}
           </div>
@@ -229,6 +225,7 @@ function PersonalDetails() {
               onKeyDown={(e) => handleKeyDown(e, 'dob-month')}
               className="form-input custom-bg-input block w-full border rounded-lg py-2 px-3 focus:outline-none sm:text-sm" 
               style={{ backgroundColor: 'rgb(248, 249, 250)' }}
+              disabled={isSubmitting}
             >
               <option value="">Day</option>
               {days.map(day => <option key={day} value={day}>{day}</option>)}
@@ -241,6 +238,7 @@ function PersonalDetails() {
               onKeyDown={(e) => handleKeyDown(e, 'dob-year')}
               className="form-input custom-bg-input block w-full border rounded-lg py-2 px-3 focus:outline-none sm:text-sm" 
               style={{ backgroundColor: 'rgb(248, 249, 250)' }}
+              disabled={isSubmitting}
             >
               <option value="">Month</option>
               {months.map((month, index) => <option key={month} value={index + 1}>{month}</option>)}
@@ -253,6 +251,7 @@ function PersonalDetails() {
               onKeyDown={(e) => handleKeyDown(e, 'nationality')}
               className="form-input custom-bg-input block w-full border rounded-lg py-2 px-3 focus:outline-none sm:text-sm" 
               style={{ backgroundColor: 'rgb(248, 249, 250)' }}
+              disabled={isSubmitting}
             >
               <option value="">Year</option>
               {years.map(year => <option key={year} value={year}>{year}</option>)}
@@ -271,6 +270,7 @@ function PersonalDetails() {
             onKeyDown={(e) => handleKeyDown(e, 'phone-code')}
             className="form-input custom-bg-input mt-1 block w-full border rounded-lg py-2 px-3 focus:outline-none sm:text-sm" 
             style={{ backgroundColor: 'rgb(248, 249, 250)' }}
+            disabled={isSubmitting}
           >
             <option value="">Select Nationality</option>
             {countries.map(country => <option key={country.country_id} value={country.country_id}>{country.name}</option>)}
@@ -288,6 +288,7 @@ function PersonalDetails() {
               onKeyDown={(e) => handleKeyDown(e, 'phone')}
               className="form-input custom-bg-input block border rounded-l-lg py-2 px-3 focus:outline-none sm:text-sm w-1/3" 
               style={{ backgroundColor: 'rgb(248, 249, 250)' }}
+              disabled={isSubmitting}
             >
               <option value="">Code</option>
               {phoneCodes.map(code => <option key={code} value={code}>+{code}</option>)}
@@ -306,7 +307,8 @@ function PersonalDetails() {
               }}
               className={`form-input custom-bg-input block w-full border rounded-r-lg py-2 px-3 focus:outline-none sm:text-sm ${errors.phone ? 'border-red-500' : ''}`} 
               style={{ backgroundColor: 'rgb(248, 249, 250)' }} 
-              placeholder="Phone" 
+              placeholder="Phone"
+              disabled={isSubmitting}
             />
           </div>
           {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
@@ -319,12 +321,12 @@ function PersonalDetails() {
             disabled={isSubmitting} 
             className="w-full flex justify-center py-3 px-4 border border-transparent rounded-full shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
           >
-            {isSubmitting ? <Spinner /> : 'Next'}
+            {isSubmitting ? <Spinner size="small" /> : 'Next'}
           </button>
           {errors.general && <p className="text-red-500 text-center mt-2">{errors.general}</p>}
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
