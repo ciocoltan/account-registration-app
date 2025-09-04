@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CheckCircle } from 'lucide-react';
 import PasswordInput from './PasswordInput';
 import { useAuth } from '../contexts/AuthContext';
@@ -24,6 +24,7 @@ function RegistrationForm({ onShowLogin }: RegistrationFormProps) {
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [countryCode, setCountryCode] = useState<string>('US');
 
   const features = [
     'Scope Invest account',
@@ -34,6 +35,31 @@ function RegistrationForm({ onShowLogin }: RegistrationFormProps) {
     'Excellent multilingual customer support',
     'Authorized and regulated by the FSC',
   ];
+
+  useEffect(() => {
+    // Get country code from Cloudflare trace
+    const getCountryFromCloudflare = async () => {
+      try {
+        const response = await fetch('https://cloudflare.com/cdn-cgi/trace');
+        const text = await response.text();
+        
+        // Parse the trace response
+        const lines = text.split('\n');
+        const locLine = lines.find(line => line.startsWith('loc='));
+        
+        if (locLine) {
+          const country = locLine.split('=')[1];
+          console.log('Detected country from Cloudflare:', country);
+          setCountryCode(country);
+        }
+      } catch (error) {
+        console.error('Failed to get country from Cloudflare:', error);
+        // Keep default 'US' if detection fails
+      }
+    };
+
+    getCountryFromCloudflare();
+  }, []);
 
   const clearError = (field: keyof FormErrors) => {
     if (errors[field]) {
@@ -73,7 +99,7 @@ function RegistrationForm({ onShowLogin }: RegistrationFormProps) {
     setErrors({});
 
     try {
-      await register(formData.email, formData.password, 'USD');
+      await register(formData.email, formData.password, 'USD', countryCode);
     } catch (error: any) {
       console.error('Registration failed:', error);
       
@@ -116,6 +142,11 @@ function RegistrationForm({ onShowLogin }: RegistrationFormProps) {
               Login here
             </button>
           </p>
+          {countryCode !== 'US' && (
+            <p className="text-xs text-gray-400 mt-1">
+              Detected location: {countryCode}
+            </p>
+          )}
         </div>
         
         <form onSubmit={handleSubmit} className="mt-8 space-y-4">

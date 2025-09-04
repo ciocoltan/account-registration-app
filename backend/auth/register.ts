@@ -1,6 +1,5 @@
 import { api, APIError } from "encore.dev/api";
 import { secret } from "encore.dev/config";
-import { Header } from "encore.dev/api";
 
 const syntelliCoreUrl = secret("SyntelliCoreUrl");
 const syntelliCoreApiKey = secret("SyntelliCoreApiKey");
@@ -9,15 +8,15 @@ export interface RegisterRequest {
   email: string;
   password: string;
   currency: string;
-  forwardedFor?: Header<"X-Forwarded-For">;
-  realIp?: Header<"X-Real-IP">;
-  remoteAddr?: Header<"X-Remote-Addr">;
+  countryCode: string;
 }
 
 export interface RegisterResponse {
   jwt: string;
   message: string;
   user?: string;
+  access_token?: string;
+  success: boolean;
 }
 
 // Gets country ID by country code from Syntellicore countries API
@@ -25,6 +24,7 @@ async function getCountryIdByCode(countryCode: string): Promise<string> {
   try {
     const formData = new URLSearchParams();
     formData.append('language', 'en');
+    formData.append('show_on_register', '1');
 
     const response = await fetch(`${syntelliCoreUrl()}/gateway/api/6/syntellicore.cfc?method=get_countries`, {
       method: "POST",
@@ -36,56 +36,94 @@ async function getCountryIdByCode(countryCode: string): Promise<string> {
 
     if (!response.ok) {
       console.log("Countries API failed, using default country ID");
-      return "1"; // Default fallback
+      return "3"; // Default fallback
     }
 
-    const data = await response.json();
-    const countries = data.countries || data || [];
+    const responseText = await response.text();
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (parseError) {
+      console.log("Failed to parse countries response as JSON:", parseError);
+      return "3"; // Default fallback
+    }
+
+    const countries = data.data || data.countries || [];
     
     if (Array.isArray(countries)) {
       const country = countries.find((c: any) => 
-        c.country_code === countryCode || 
-        c.code === countryCode ||
-        c.iso_code === countryCode
+        c.iso_alpha2_code === countryCode || 
+        c.country_code === countryCode ||
+        c.code === countryCode
       );
       
       if (country) {
         console.log("Found country:", country);
-        return country.country_id || country.id || "1";
+        return country.country_id || country.id || "3";
       }
     }
     
     console.log("Country not found for code:", countryCode, "using default");
-    return "1"; // Default fallback
+    return "3"; // Default fallback
   } catch (error) {
     console.log("Error getting country ID:", error);
-    return "1"; // Default fallback
+    return "3"; // Default fallback
   }
 }
 
-// Gets country by IP using free IP geolocation service
-async function getCountryByIp(ip: string): Promise<{ countryCode: string; countryName: string }> {
-  try {
-    const response = await fetch(`http://ip-api.com/json/${ip}?fields=status,message,country,countryCode`);
-    
-    if (!response.ok) {
-      return { countryCode: 'US', countryName: 'United States' };
-    }
+// Performs login after registration
+async function performLogin(email: string, password: string): Promise<{ jwt: string; user: string; access_token: string }> {
+  const formData = new URLSearchParams();
+  formData.append('email', email);
+  formData.append('password', password);
 
-    const data = await response.json();
-    
-    if (data.status !== 'success') {
-      return { countryCode: 'US', countryName: 'United States' };
-    }
+  const requestUrl = `${syntelliCoreUrl()}/gateway/api/1/syntellicore.cfc?method=user_login`;
+  const requestHeaders = {
+    "api_key": syntelliCoreApiKey(),
+  };
 
-    return {
-      countryCode: data.countryCode || 'US',
-      countryName: data.country || 'United States'
-    };
-  } catch (error) {
-    console.log("IP geolocation error:", error);
-    return { countryCode: 'US', countryName: 'United States' };
+  console.log("=== SYNTELLICORE AUTO-LOGIN AFTER REGISTER API REQUEST ===");
+  console.log("URL:", requestUrl);
+
+  const response = await fetch(requestUrl, {
+    method: "POST",
+    headers: requestHeaders,
+    body: formData,
+  });
+
+  const responseText = await response.text();
+  console.log("Raw Login Response Body:", responseText);
+
+  if (!response.ok) {
+    console.log("Auto-login request failed with status:", response.status);
+    throw APIError.internal("Auto-login after registration failed");
   }
+
+  let data;
+  try {
+    data = JSON.parse(responseText);
+  } catch (parseError) {
+    console.log("Failed to parse auto-login response as JSON:", parseError);
+    throw APIError.internal("Invalid response format from auto-login service");
+  }
+  
+  // Check if the response indicates success and extract authentication data
+  if (!data.success || !data.data || !Array.isArray(data.data) || data.data.length === 0) {
+    console.log("Auto-login API returned error or invalid response structure");
+    throw APIError.internal("Auto-login after registration failed");
+  }
+
+  const userData = data.data[0];
+  if (!userData.authentication_token) {
+    console.log("Auto-login API returned success but missing authentication_token");
+    throw APIError.internal("Auto-login after registration failed");
+  }
+
+  return {
+    jwt: userData.authentication_token,
+    user: userData.user,
+    access_token: userData.authentication_token
+  };
 }
 
 // Registers a new user account.
@@ -97,22 +135,16 @@ export const register = api<RegisterRequest, RegisterResponse>(
       throw APIError.invalidArgument("Email and password are required");
     }
 
+    if (!req.countryCode) {
+      throw APIError.invalidArgument("Country code is required");
+    }
+
     try {
-      // Get client IP
-      const clientIp = req.forwardedFor?.split(',')[0]?.trim() || 
-                       req.realIp || 
-                       req.remoteAddr || 
-                       '8.8.8.8'; // Fallback IP for testing
-
-      console.log("=== GETTING COUNTRY BY IP ===");
-      console.log("Client IP:", clientIp);
-
-      // Get country by IP
-      const ipCountry = await getCountryByIp(clientIp);
-      console.log("IP Country:", ipCountry);
+      console.log("=== GETTING COUNTRY BY CODE ===");
+      console.log("Country Code:", req.countryCode);
 
       // Get country ID from Syntellicore API
-      const countryId = await getCountryIdByCode(ipCountry.countryCode);
+      const countryId = await getCountryIdByCode(req.countryCode);
       console.log("Country ID:", countryId);
 
       const formData = new URLSearchParams();
@@ -171,15 +203,17 @@ export const register = api<RegisterRequest, RegisterResponse>(
         }
         throw APIError.invalidArgument(data.error);
       }
-      
-      // For registration, we might need to do a login call to get the access token
-      // or use the returned user data to generate a token
-      const mockToken = `registered-${Date.now()}`;
+
+      // If registration was successful, perform auto-login
+      console.log("Registration successful, performing auto-login...");
+      const loginData = await performLogin(req.email, req.password);
       
       const successResponse = {
-        jwt: mockToken,
-        message: "User registered successfully",
-        user: data.user
+        jwt: loginData.jwt,
+        message: "User registered and logged in successfully",
+        user: loginData.user,
+        access_token: loginData.access_token,
+        success: true
       };
 
       console.log("Final response:", JSON.stringify(successResponse, null, 2));

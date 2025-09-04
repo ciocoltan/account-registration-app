@@ -11,7 +11,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   authData: AuthData | null;
   login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
-  register: (email: string, password: string, currency: string) => Promise<void>;
+  register: (email: string, password: string, currency: string, countryCode: string) => Promise<void>;
   logout: () => Promise<void>;
   isLoading: boolean;
 }
@@ -99,19 +99,42 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  const register = async (email: string, password: string, currency: string) => {
+  const register = async (email: string, password: string, currency: string, countryCode: string) => {
     try {
-      // First register the user
+      // Register the user with auto-login
       const registerResponse = await backend.auth.register({
         email,
         password,
-        currency
+        currency,
+        countryCode
       });
 
       console.log('Registration successful:', registerResponse.message);
 
-      // Then immediately login to get the access token (with remember me enabled by default)
-      await login(email, password, true);
+      if (registerResponse.success && registerResponse.jwt && registerResponse.user && registerResponse.access_token) {
+        const newAuthData: AuthData = {
+          user: registerResponse.user,
+          accessToken: registerResponse.access_token,
+          jwt: registerResponse.jwt
+        };
+        
+        setAuthData(newAuthData);
+        setIsAuthenticated(true);
+
+        // Set login cookie for auto-login on future visits
+        try {
+          await backend.auth.setLoginCookie({
+            email,
+            password
+          });
+          console.log('Login cookie set after registration');
+        } catch (cookieError) {
+          console.error('Failed to set login cookie after registration:', cookieError);
+          // Don't fail the registration if cookie setting fails
+        }
+      } else {
+        throw new Error('Registration completed but auto-login failed');
+      }
     } catch (error: any) {
       console.error('Registration failed:', error);
       throw error;
