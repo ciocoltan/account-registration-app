@@ -134,10 +134,6 @@ export const register = api<RegisterRequest, RegisterResponse>(
       throw APIError.invalidArgument("Email and password are required");
     }
 
-    if (!req.countryCode) {
-      throw APIError.invalidArgument("Country code is required");
-    }
-
     try {
       console.log("=== GETTING COUNTRY BY CODE ===");
       console.log("Country Code:", req.countryCode);
