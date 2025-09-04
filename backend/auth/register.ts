@@ -179,7 +179,7 @@ export const register = api<RegisterRequest, RegisterResponse>(
       const successResponse = {
         jwt: mockToken,
         message: "User registered successfully",
-        user: data.user || data.customer_no
+        user: data.user
       };
 
       console.log("Final response:", JSON.stringify(successResponse, null, 2));
