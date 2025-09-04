@@ -53,7 +53,7 @@ export const login = api<LoginRequest, LoginResponse>(
       console.log("=== SYNTELLICORE LOGIN API RESPONSE ===");
       console.log("Status:", response.status);
       console.log("Status Text:", response.statusText);
-      console.log("Response Headers:", Object.fromEntries(response.headers.entries()));
+      //console.log("Response Headers:", Object.fromEntries(response.headers.entries()));
 
       const responseText = await response.text();
       console.log("Raw Response Body:", responseText);
