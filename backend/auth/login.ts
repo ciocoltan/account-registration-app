@@ -38,10 +38,7 @@ export const login = api<LoginRequest, LoginResponse>(
       // Log the API request details
       console.log("=== SYNTELLICORE LOGIN API REQUEST ===");
       console.log("URL:", requestUrl);
-      console.log("Method: POST");
-      console.log("Headers:", JSON.stringify(requestHeaders, null, 2));
       console.log("Body (FormData):", Object.fromEntries(formData.entries()));
-      //console.log("Raw FormData string:", formData.toString());
 
       const response = await fetch(requestUrl, {
         method: "POST",
