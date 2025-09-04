@@ -90,6 +90,20 @@ function RegistrationForm({ onShowLogin }: RegistrationFormProps) {
     return Object.keys(newErrors).length === 0;
   };
 
+  const categorizeError = (errorMessage: string): { field: keyof FormErrors; message: string } => {
+    const lowerMessage = errorMessage.toLowerCase();
+    
+    if (lowerMessage.includes('email')) {
+      return { field: 'email', message: errorMessage };
+    }
+    
+    if (lowerMessage.includes('password')) {
+      return { field: 'password', message: errorMessage };
+    }
+    
+    return { field: 'general', message: errorMessage };
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -108,7 +122,8 @@ function RegistrationForm({ onShowLogin }: RegistrationFormProps) {
       if (errorMessage.toLowerCase().includes('already exists')) {
         onShowLogin();
       } else {
-        setErrors({ general: errorMessage });
+        const { field, message } = categorizeError(errorMessage);
+        setErrors({ [field]: message });
       }
     } finally {
       setIsSubmitting(false);
@@ -181,6 +196,9 @@ function RegistrationForm({ onShowLogin }: RegistrationFormProps) {
               onChange={(value) => handleInputChange('password', value)}
               error={errors.password}
             />
+            {errors.password && (
+              <p className="text-red-500 text-sm mt-1">{errors.password}</p>
+            )}
           </div>
           
           <div className="pt-2">
