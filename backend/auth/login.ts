@@ -48,8 +48,6 @@ export const login = api<LoginRequest, LoginResponse>(
 
       // Log the response details
       console.log("=== SYNTELLICORE LOGIN API RESPONSE ===");
-      //console.log("Status:", response.status);
-      //console.log("Status Text:", response.statusText);
 
       const responseText = await response.text();
       console.log("Raw Response Body:", responseText);
@@ -65,7 +63,6 @@ export const login = api<LoginRequest, LoginResponse>(
       let data;
       try {
         data = JSON.parse(responseText);
-        //console.log("Parsed Response JSON:", JSON.stringify(data, null, 2));
       } catch (parseError) {
         console.log("Failed to parse response as JSON:", parseError);
         throw APIError.internal("Invalid response format from login service");
@@ -90,7 +87,6 @@ export const login = api<LoginRequest, LoginResponse>(
         access_token: userData.authentication_token
       };
 
-      //console.log("Final response:", JSON.stringify(successResponse, null, 2));
       console.log("=== END SYNTELLICORE LOGIN API ===");
 
       return successResponse;
