@@ -212,9 +212,9 @@ function RegistrationForm({ onShowLogin }: RegistrationFormProps) {
                 </a>
               </label>
             </div>
-            {errors.privacy && (
+            {/* {errors.privacy && (
               <p className="text-red-500 text-sm mt-1">{errors.privacy}</p>
-            )}
+            )} */}
           </div>
           
           <div className="flex items-center">
