@@ -42,7 +42,8 @@ export const setUserData = api<SetUserDataRequest, SetUserDataResponse>(
 
       console.log("=== SYNTELLICORE SET USER DATA API REQUEST ===");
       console.log("URL:", requestUrl);
-
+			console.log("Raw FormData string:", formData.toString());
+			
       const response = await fetch(requestUrl, {
         method: "POST",
         headers: requestHeaders,
