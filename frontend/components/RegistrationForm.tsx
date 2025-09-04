@@ -196,9 +196,9 @@ function RegistrationForm({ onShowLogin }: RegistrationFormProps) {
               onChange={(value) => handleInputChange('password', value)}
               error={errors.password}
             />
-            {/* {errors.password && (
+            {errors.password && (
               <p className="text-red-500 text-sm mt-1">{errors.password}</p>
-            )} */}
+            )}
           </div>
           
           <div className="pt-2">
