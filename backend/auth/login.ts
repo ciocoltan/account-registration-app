@@ -76,16 +76,16 @@ export const login = api<LoginRequest, LoginResponse>(
       }
       
       // Check if the response indicates success
-      if (data.error || !data.access_token) {
+      if (data.error || !data.authentication_token) {
         console.log("API returned error or missing access_token:", data.error || "No access_token");
         throw APIError.unauthenticated("Invalid email or password");
       }
       
       const successResponse = {
-        jwt: data.access_token,
+        jwt: data.authentication_token,
         message: "Login successful",
         user: data.user,
-        access_token: data.access_token
+        access_token: data.authentication_token
       };
 
       console.log("Final response:", JSON.stringify(successResponse, null, 2));
