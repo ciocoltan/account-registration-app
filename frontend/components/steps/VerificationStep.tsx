@@ -1,11 +1,20 @@
 import React from 'react';
 import { Clipboard } from 'lucide-react';
+import { useBackend } from '../../hooks/useBackend';
 
-interface VerificationStepProps {
-  onInitiateKyc: () => void;
-}
+function VerificationStep() {
+  const backend = useBackend();
 
-function VerificationStep({ onInitiateKyc }: VerificationStepProps) {
+  const handleInitiateKyc = async () => {
+    try {
+      const response = await backend.kyc.initiate();
+      console.log('KYC initiated:', response);
+      // Handle KYC initiation success
+    } catch (error) {
+      console.error('Failed to initiate KYC:', error);
+    }
+  };
+
   return (
     <div className="text-center">
       <div className="p-8 border rounded-lg">
@@ -24,7 +33,7 @@ function VerificationStep({ onInitiateKyc }: VerificationStepProps) {
       <div className="mt-6 space-y-3">
         <button
           type="button"
-          onClick={onInitiateKyc}
+          onClick={handleInitiateKyc}
           className="w-full flex justify-center py-3 px-4 border border-transparent rounded-full shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700"
         >
           Continue on this device

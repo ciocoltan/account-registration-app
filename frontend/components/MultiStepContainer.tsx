@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import Stepper from './Stepper';
 import LogoutButton from './LogoutButton';
-import backend from '~backend/client';
 
 const stepFlow = [
   'personal-details', 'residence-address', 'public-official-status',
@@ -50,27 +49,9 @@ function MultiStepContainer() {
     }
   };
 
-  const handleLogout = async () => {
-    const user = localStorage.getItem('user');
-    const access_token = localStorage.getItem('access_token');
-    
-    if (user && access_token) {
-      try {
-        await backend.auth.logout({ user, access_token });
-      } catch (error) {
-        console.error('Logout API call failed:', error);
-      }
-    }
-    
-    localStorage.removeItem('jwt');
-    localStorage.removeItem('user');
-    localStorage.removeItem('access_token');
-    window.location.reload();
-  };
-
   return (
     <div className="bg-white p-12 rounded-xl w-full max-w-3xl border border-gray-200 relative">
-      <LogoutButton onLogout={handleLogout} />
+      <LogoutButton />
       
       <Stepper
         currentMainStep={currentStepInfo.mainStep}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import backend from '~backend/client';
+import { useBackend } from '../../hooks/useBackend';
+import { useAuth } from '../../contexts/AuthContext';
 import type { Country } from '~backend/auth/countries';
 import Spinner from '../Spinner';
 
@@ -35,6 +36,8 @@ const defaultPhoneCodes = ['1', '20', '27', '33', '34', '39', '44', '49', '52', 
 
 function PersonalDetails() {
   const navigate = useNavigate();
+  const backend = useBackend();
+  const { authData } = useAuth();
   const [localData, setLocalData] = useState<FormData>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [countries, setCountries] = useState<Country[]>(defaultCountries);
@@ -72,7 +75,7 @@ function PersonalDetails() {
     };
 
     fetchCountries();
-  }, []);
+  }, [backend]);
 
   const handleInputChange = (name: string, value: string | boolean) => {
     const newData = { ...localData, [name]: value };
@@ -111,23 +114,20 @@ function PersonalDetails() {
 
   const handleNext = async () => {
     if (!validateStep()) return;
+    if (!authData?.user || !authData?.accessToken) {
+      setErrors(prev => ({ ...prev, general: "Authentication required" }));
+      return;
+    }
 
     setIsSubmitting(true);
     try {
-      const user = localStorage.getItem('user');
-      const access_token = localStorage.getItem('access_token');
-
-      if (!user || !access_token) {
-        throw new Error("User not authenticated");
-      }
-
       const day = String(localData['dob-day']).padStart(2, '0');
       const month = String(localData['dob-month']).padStart(2, '0');
       const birth_dt = `${localData['dob-year']}/${day}/${month}`;
 
       await backend.onboarding.setUserData({
-        user,
-        access_token,
+        user: authData.user,
+        access_token: authData.accessToken,
         fname: localData['first-name'] as string,
         lname: localData['last-name'] as string,
         tel1: localData['phone'] as string,

@@ -4,13 +4,9 @@ import LoginForm from './LoginForm';
 import ForgotPasswordForm from './ForgotPasswordForm';
 import FloatingElements from './FloatingElements';
 
-interface AuthContainerProps {
-  onAuthSuccess: () => void;
-}
-
 type AuthView = 'registration' | 'login' | 'forgot-password';
 
-function AuthContainer({ onAuthSuccess }: AuthContainerProps) {
+function AuthContainer() {
   const [currentView, setCurrentView] = useState<AuthView>('registration');
 
   const showRegistration = () => setCurrentView('registration');
@@ -21,7 +17,6 @@ function AuthContainer({ onAuthSuccess }: AuthContainerProps) {
     <div className="w-full transition-opacity duration-300">
       {currentView === 'registration' && (
         <RegistrationForm 
-          onAuthSuccess={onAuthSuccess}
           onShowLogin={showLogin}
         />
       )}
@@ -30,7 +25,6 @@ function AuthContainer({ onAuthSuccess }: AuthContainerProps) {
         <>
           <FloatingElements />
           <LoginForm 
-            onAuthSuccess={onAuthSuccess}
             onShowRegister={showRegistration}
             onShowForgotPassword={showForgotPassword}
           />

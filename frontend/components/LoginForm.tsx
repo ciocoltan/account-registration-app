@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import PasswordInput from './PasswordInput';
-import backend from '~backend/client';
+import { useAuth } from '../contexts/AuthContext';
 
 interface LoginFormProps {
-  onAuthSuccess: () => void;
   onShowRegister: () => void;
   onShowForgotPassword: () => void;
 }
@@ -13,7 +12,8 @@ interface FormErrors {
   general?: string;
 }
 
-function LoginForm({ onAuthSuccess, onShowRegister, onShowForgotPassword }: LoginFormProps) {
+function LoginForm({ onShowRegister, onShowForgotPassword }: LoginFormProps) {
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -44,21 +44,7 @@ function LoginForm({ onAuthSuccess, onShowRegister, onShowForgotPassword }: Logi
     setErrors({});
 
     try {
-      const response = await backend.auth.login({
-        email: formData.email,
-        password: formData.password
-      });
-
-      if (response.jwt) {
-        localStorage.setItem('jwt', response.jwt);
-        if (response.user) {
-          localStorage.setItem('user', response.user);
-        }
-        if (response.access_token) {
-          localStorage.setItem('access_token', response.access_token);
-        }
-        onAuthSuccess();
-      }
+      await login(formData.email, formData.password);
     } catch (error: any) {
       console.error('Login failed:', error);
       const errorMessage = error?.message || 'Invalid email or password.';

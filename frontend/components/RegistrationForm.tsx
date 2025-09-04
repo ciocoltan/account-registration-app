@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { CheckCircle } from 'lucide-react';
 import PasswordInput from './PasswordInput';
-import backend from '~backend/client';
+import { useAuth } from '../contexts/AuthContext';
 
 interface RegistrationFormProps {
-  onAuthSuccess: () => void;
   onShowLogin: () => void;
 }
 
@@ -15,7 +14,8 @@ interface FormErrors {
   general?: string;
 }
 
-function RegistrationForm({ onAuthSuccess, onShowLogin }: RegistrationFormProps) {
+function RegistrationForm({ onShowLogin }: RegistrationFormProps) {
+  const { register } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -73,19 +73,7 @@ function RegistrationForm({ onAuthSuccess, onShowLogin }: RegistrationFormProps)
     setErrors({});
 
     try {
-      const response = await backend.auth.register({
-        email: formData.email,
-        password: formData.password,
-        currency: 'USD'
-      });
-
-      if (response.jwt) {
-        localStorage.setItem('jwt', response.jwt);
-        if (response.user) {
-          localStorage.setItem('user', response.user);
-        }
-        onAuthSuccess();
-      }
+      await register(formData.email, formData.password, 'USD');
     } catch (error: any) {
       console.error('Registration failed:', error);
       
@@ -93,7 +81,6 @@ function RegistrationForm({ onAuthSuccess, onShowLogin }: RegistrationFormProps)
       
       if (errorMessage.toLowerCase().includes('already exists')) {
         onShowLogin();
-        // Note: In a real app, you might want to pass the email to the login form
       } else {
         setErrors({ general: errorMessage });
       }

@@ -1,14 +1,21 @@
 import React from 'react';
 import { LogOut } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
-interface LogoutButtonProps {
-  onLogout: () => void;
-}
+function LogoutButton() {
+  const { logout } = useAuth();
 
-function LogoutButton({ onLogout }: LogoutButtonProps) {
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
+
   return (
     <button
-      onClick={onLogout}
+      onClick={handleLogout}
       className="absolute top-4 right-4 flex items-center px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors duration-200"
       title="Logout"
     >

@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import AuthContainer from './components/AuthContainer';
 import MultiStepContainer from './components/MultiStepContainer';
 import PersonalDetails from './components/steps/PersonalDetails';
@@ -16,37 +17,9 @@ import RiskTolerance from './components/steps/RiskTolerance';
 import TradingObjective from './components/steps/TradingObjective';
 import VerificationStep from './components/steps/VerificationStep';
 import Spinner from './components/Spinner';
-import backend from '~backend/client';
 
-function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    handleSession();
-  }, []);
-
-  const handleSession = async () => {
-    const jwt = localStorage.getItem('jwt');
-    if (jwt) {
-      try {
-        // A simple check if the token is present.
-        // A more robust solution would be to have a /me endpoint to verify the token.
-        setIsAuthenticated(true);
-      } catch (error) {
-        console.error('Session check failed:', error);
-        localStorage.removeItem('jwt');
-        setIsAuthenticated(false);
-      }
-    } else {
-      setIsAuthenticated(false);
-    }
-    setIsLoading(false);
-  };
-
-  const onAuthSuccess = () => {
-    handleSession();
-  };
+function AppContent() {
+  const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
     return (
@@ -60,7 +33,7 @@ function App() {
     <BrowserRouter>
       <div className="bg-white flex items-center justify-center min-h-screen p-4 overflow-hidden">
         {!isAuthenticated ? (
-          <AuthContainer onAuthSuccess={onAuthSuccess} />
+          <AuthContainer />
         ) : (
           <Routes>
             <Route path="/en/apply" element={<MultiStepContainer />}>
@@ -84,6 +57,14 @@ function App() {
         )}
       </div>
     </BrowserRouter>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 
