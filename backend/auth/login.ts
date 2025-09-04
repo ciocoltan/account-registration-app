@@ -92,14 +92,21 @@ export const login = api<LoginRequest, LoginResponse>(
       return successResponse;
     } catch (error: any) {
       console.log("=== SYNTELLICORE LOGIN API ERROR ===");
-      console.log("Error:", error);
-      console.log("Error stack:", error.stack);
+			if (error instanceof APIError) {
+    console.log(`Error: APIError: ${error.message}`);
+    throw error; // re-throw to keep the correct response
+  } else {
+    console.log(`Error: ${error.message || error}`);
+    throw APIError.internal("Registration service unavailable");
+  }
+      // console.log("Error:", error);
+      // console.log("Error stack:", error.stack);
       
-      if (error.code) {
-        throw error; // Re-throw APIError
-      }
-      console.error("Login API error:", error);
-      throw APIError.internal("Login service unavailable");
+      // if (error.code) {
+      //   throw error; // Re-throw APIError
+      // }
+      // console.error("Login API error:", error);
+      // throw APIError.internal("Login service unavailable");
     }
   }
 );
