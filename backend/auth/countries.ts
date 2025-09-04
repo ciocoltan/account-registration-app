@@ -51,11 +51,11 @@ export const getCountries = api<void, GetCountriesResponse>(
 
       // Log the response details
       console.log("=== SYNTELLICORE GET COUNTRIES API RESPONSE ===");
-      console.log("Status:", response.status);
-      console.log("Status Text:", response.statusText);
+      //console.log("Status:", response.status);
+      //console.log("Status Text:", response.statusText);
       
       const responseText = await response.text();
-      console.log("Raw Response Body:", responseText);
+      //console.log("Raw Response Body:", responseText);
 
       if (!response.ok) {
         console.log("Request failed with status:", response.status);
