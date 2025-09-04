@@ -1,27 +1,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-interface FormData {
-  [key: string]: string | boolean;
-}
-
-interface ProfessionalExperienceProps {
-  formData?: FormData;
-  onSaveData?: (data: FormData) => void;
-  onNext?: () => void;
-}
-
-function ProfessionalExperience({ formData = {}, onSaveData, onNext }: ProfessionalExperienceProps) {
+function ProfessionalExperience() {
   const navigate = useNavigate();
 
   const handleOptionClick = (value: string) => {
-    onSaveData?.({ professionalExperience: value });
     setTimeout(() => {
-      if (onNext) {
-        onNext();
-      } else {
-        navigate('/en/apply/risk-tolerance');
-      }
+      navigate('/en/apply/risk-tolerance');
     }, 200);
   };
 

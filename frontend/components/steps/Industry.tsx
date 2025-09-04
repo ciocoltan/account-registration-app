@@ -1,27 +1,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-interface FormData {
-  [key: string]: string | boolean;
-}
-
-interface IndustryProps {
-  formData?: FormData;
-  onSaveData?: (data: FormData) => void;
-  onNext?: () => void;
-}
-
-function Industry({ formData = {}, onSaveData, onNext }: IndustryProps) {
+function Industry() {
   const navigate = useNavigate();
 
   const handleOptionClick = (value: string) => {
-    onSaveData?.({ industry: value });
     setTimeout(() => {
-      if (onNext) {
-        onNext();
-      } else {
-        navigate('/en/apply/annual-income');
-      }
+      navigate('/en/apply/annual-income');
     }, 200);
   };
 

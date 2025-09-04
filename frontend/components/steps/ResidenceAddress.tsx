@@ -1,29 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-interface FormData {
-  [key: string]: string | boolean;
-}
-
-interface ResidenceAddressProps {
-  formData?: FormData;
-  onSaveData?: (data: FormData) => void;
-  onNext?: () => void;
-}
-
-function ResidenceAddress({ formData = {}, onSaveData, onNext }: ResidenceAddressProps) {
+function ResidenceAddress() {
   const navigate = useNavigate();
-  const [localData, setLocalData] = useState<FormData>(formData);
+  const [formData, setFormData] = useState({
+    residenceCountry: 'Israel',
+    notUsCitizen: false,
+    agreedToTerms: false
+  });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    setLocalData(formData);
-  }, [formData]);
-
   const handleInputChange = (name: string, value: string | boolean) => {
-    const newData = { ...localData, [name]: value };
-    setLocalData(newData);
-    onSaveData?.(newData);
+    setFormData(prev => ({ ...prev, [name]: value }));
     
     // Clear error when user starts typing
     if (errors[name]) {
@@ -38,7 +26,7 @@ function ResidenceAddress({ formData = {}, onSaveData, onNext }: ResidenceAddres
   const validateStep = (): boolean => {
     const newErrors: Record<string, string> = {};
     
-    if (!localData['agreedToTerms']) newErrors['agreedToTerms'] = 'You must agree to the terms';
+    if (!formData.agreedToTerms) newErrors['agreedToTerms'] = 'You must agree to the terms';
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -46,11 +34,7 @@ function ResidenceAddress({ formData = {}, onSaveData, onNext }: ResidenceAddres
 
   const handleNext = () => {
     if (validateStep()) {
-      if (onNext) {
-        onNext();
-      } else {
-        navigate('/en/apply/public-official-status');
-      }
+      navigate('/en/apply/public-official-status');
     }
   };
 
@@ -67,7 +51,7 @@ function ResidenceAddress({ formData = {}, onSaveData, onNext }: ResidenceAddres
         <select
           id="residence-country"
           name="residenceCountry"
-          value={localData.residenceCountry as string || 'Israel'}
+          value={formData.residenceCountry}
           onChange={(e) => handleInputChange('residenceCountry', e.target.value)}
           className="form-input custom-bg-input mt-1 block w-full border rounded-lg py-2 px-3 focus:outline-none sm:text-sm"
           style={{ backgroundColor: 'rgb(248, 249, 250)' }}
@@ -83,7 +67,7 @@ function ResidenceAddress({ formData = {}, onSaveData, onNext }: ResidenceAddres
             id="not-us-citizen"
             name="notUsCitizen"
             type="checkbox"
-            checked={localData.notUsCitizen as boolean || false}
+            checked={formData.notUsCitizen}
             onChange={(e) => handleInputChange('notUsCitizen', e.target.checked)}
             className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
           />
@@ -98,7 +82,7 @@ function ResidenceAddress({ formData = {}, onSaveData, onNext }: ResidenceAddres
               id="terms-conditions"
               name="agreedToTerms"
               type="checkbox"
-              checked={localData.agreedToTerms as boolean || false}
+              checked={formData.agreedToTerms}
               onChange={(e) => handleInputChange('agreedToTerms', e.target.checked)}
               className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
             />

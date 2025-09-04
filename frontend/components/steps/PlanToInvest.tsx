@@ -1,27 +1,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-interface FormData {
-  [key: string]: string | boolean;
-}
-
-interface PlanToInvestProps {
-  formData?: FormData;
-  onSaveData?: (data: FormData) => void;
-  onNext?: () => void;
-}
-
-function PlanToInvest({ formData = {}, onSaveData, onNext }: PlanToInvestProps) {
+function PlanToInvest() {
   const navigate = useNavigate();
 
   const handleOptionClick = (value: string) => {
-    onSaveData?.({ planToInvest: value });
     setTimeout(() => {
-      if (onNext) {
-        onNext();
-      } else {
-        navigate('/en/apply/investment-source');
-      }
+      navigate('/en/apply/investment-source');
     }, 200);
   };
 

@@ -1,27 +1,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-interface FormData {
-  [key: string]: string | boolean;
-}
-
-interface TradingObjectiveProps {
-  formData?: FormData;
-  onSaveData?: (data: FormData) => void;
-  onNext?: () => void;
-}
-
-function TradingObjective({ formData = {}, onSaveData, onNext }: TradingObjectiveProps) {
+function TradingObjective() {
   const navigate = useNavigate();
 
   const handleOptionClick = (value: string) => {
-    onSaveData?.({ tradingObjective: value });
     setTimeout(() => {
-      if (onNext) {
-        onNext();
-      } else {
-        navigate('/en/apply/verification');
-      }
+      navigate('/en/apply/verification');
     }, 200);
   };
 

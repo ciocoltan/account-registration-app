@@ -1,27 +1,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-interface FormData {
-  [key: string]: string | boolean;
-}
-
-interface RiskToleranceProps {
-  formData?: FormData;
-  onSaveData?: (data: FormData) => void;
-  onNext?: () => void;
-}
-
-function RiskTolerance({ formData = {}, onSaveData, onNext }: RiskToleranceProps) {
+function RiskTolerance() {
   const navigate = useNavigate();
 
   const handleOptionClick = (value: string) => {
-    onSaveData?.({ riskTolerance: value });
     setTimeout(() => {
-      if (onNext) {
-        onNext();
-      } else {
-        navigate('/en/apply/trading-objective');
-      }
+      navigate('/en/apply/trading-objective');
     }, 200);
   };
 
