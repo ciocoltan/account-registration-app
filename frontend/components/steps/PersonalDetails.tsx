@@ -54,7 +54,7 @@ function PersonalDetails({ formData, onSaveData, onNext }: PersonalDetailsProps)
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
   const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 100 }, (_, i) => currentYear - i);
+  const years = Array.from({ length: 100 }, (_, i) => (currentYear -18) - i);
 
   return (
     <div className="space-y-3">
@@ -72,8 +72,8 @@ function PersonalDetails({ formData, onSaveData, onNext }: PersonalDetailsProps)
           style={{ backgroundColor: 'rgb(248, 249, 250)' }}
         >
           <option>Mr</option>
-          <option>Mrs</option>
-          <option>Ms</option>
+          <option>Ms/Mrs/Miss</option>
+          <option>Other</option>
         </select>
       </div>
       
