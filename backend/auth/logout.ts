@@ -36,7 +36,6 @@ export const logout = api<LogoutRequest, LogoutResponse>(
       // Log the API request details
       console.log("=== SYNTELLICORE LOGOUT API REQUEST ===");
       console.log("URL:", requestUrl);
-      console.log("Body (FormData):", Object.fromEntries(formData.entries()));
 
       const response = await fetch(requestUrl, {
         method: "POST",
