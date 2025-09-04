@@ -118,13 +118,9 @@ function RegistrationForm({ onShowLogin }: RegistrationFormProps) {
       console.error('Registration failed:', error);
       
       const errorMessage = error?.message || 'Registration failed.';
-      
-      // if (errorMessage.toLowerCase().includes('already exists')) {
-      //   onShowLogin();
-      // } else {
+     
         const { field, message } = categorizeError(errorMessage);
         setErrors({ [field]: message });
-      // }
     } finally {
       setIsSubmitting(false);
     }
