@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Stepper from './Stepper';
 import StepContent from './StepContent';
+import LogoutButton from './LogoutButton';
 import backend from '~backend/client';
 
 interface MultiStepContainerProps {
@@ -37,7 +38,15 @@ function MultiStepContainer({ initialStep }: MultiStepContainerProps) {
     try {
       // Save data based on step
       if (stepId.startsWith('1-')) {
-        await backend.onboarding.saveStep1({ data });
+        // Ensure required fields have default values for step 1
+        const step1Data = {
+          residenceCountry: data.residenceCountry || 'Israel',
+          notUsCitizen: data.notUsCitizen || false,
+          agreedToTerms: data.agreedToTerms || false,
+          publicOfficialStatus: data.publicOfficialStatus || 'None of the above',
+          ...data // Include all other data
+        };
+        await backend.onboarding.saveStep1({ data: step1Data });
       } else if (stepId.startsWith('2-')) {
         await backend.onboarding.saveStep2({ data });
       } else if (stepId.startsWith('3-')) {
@@ -88,11 +97,18 @@ function MultiStepContainer({ initialStep }: MultiStepContainerProps) {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('jwt');
+    window.location.reload(); // This will trigger the app to redirect to auth
+  };
+
   const currentStepId = stepFlow[currentStepIndex];
   const [mainStep, subStep] = currentStepId.split('-').map(Number);
 
   return (
-    <div className="bg-white p-12 rounded-xl w-full max-w-3xl border border-gray-200">
+    <div className="bg-white p-12 rounded-xl w-full max-w-3xl border border-gray-200 relative">
+      <LogoutButton onLogout={handleLogout} />
+      
       <Stepper
         currentMainStep={mainStep}
         currentSubStep={subStep}

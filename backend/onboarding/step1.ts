@@ -1,10 +1,19 @@
 import { api } from "encore.dev/api";
 
 export interface Step1Data {
-  residenceCountry: string;
-  notUsCitizen: boolean;
-  agreedToTerms: boolean;
-  publicOfficialStatus: string;
+  residenceCountry?: string;
+  notUsCitizen?: boolean;
+  agreedToTerms?: boolean;
+  publicOfficialStatus?: string;
+  title?: string;
+  'first-name'?: string;
+  'last-name'?: string;
+  'dob-day'?: string;
+  'dob-month'?: string;
+  'dob-year'?: string;
+  nationality?: string;
+  'phone-code'?: string;
+  phone?: string;
 }
 
 export interface SaveStep1Request {
