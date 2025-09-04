@@ -10,7 +10,7 @@ interface AuthData {
 interface AuthContextType {
   isAuthenticated: boolean;
   authData: AuthData | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
   register: (email: string, password: string, currency: string) => Promise<void>;
   logout: () => Promise<void>;
   isLoading: boolean;
@@ -28,11 +28,39 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // No session restoration from localStorage - users need to login again
-    setIsLoading(false);
+    // Attempt auto-login on app load
+    const attemptAutoLogin = async () => {
+      try {
+        const response = await backend.auth.autoLogin({});
+        
+        if (response.success && response.jwt && response.user && response.access_token) {
+          const newAuthData: AuthData = {
+            user: response.user,
+            accessToken: response.access_token,
+            jwt: response.jwt
+          };
+          
+          setAuthData(newAuthData);
+          setIsAuthenticated(true);
+          console.log('Auto-login successful');
+        }
+      } catch (error: any) {
+        console.log('Auto-login failed or no saved credentials:', error.message);
+        // Clear any invalid cookies
+        try {
+          await backend.auth.clearLoginCookie();
+        } catch (clearError) {
+          console.log('Failed to clear login cookie:', clearError);
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    attemptAutoLogin();
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, rememberMe: boolean = false) => {
     try {
       const response = await backend.auth.login({
         email,
@@ -48,6 +76,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
         
         setAuthData(newAuthData);
         setIsAuthenticated(true);
+
+        // If remember me is checked, set the login cookie
+        if (rememberMe) {
+          try {
+            await backend.auth.setLoginCookie({
+              email,
+              password
+            });
+            console.log('Login cookie set for remember me');
+          } catch (cookieError) {
+            console.error('Failed to set login cookie:', cookieError);
+            // Don't fail the login if cookie setting fails
+          }
+        }
       } else {
         throw new Error('Invalid login response');
       }
@@ -68,8 +110,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       console.log('Registration successful:', registerResponse.message);
 
-      // Then immediately login to get the access token
-      await login(email, password);
+      // Then immediately login to get the access token (with remember me enabled by default)
+      await login(email, password, true);
     } catch (error: any) {
       console.error('Registration failed:', error);
       throw error;
@@ -78,6 +120,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const logout = async () => {
     try {
+      // Clear the login cookie first
+      await backend.auth.clearLoginCookie();
+      
       if (authData?.user && authData?.accessToken) {
         await backend.auth.logout({
           user: authData.user,

@@ -87,12 +87,15 @@ export interface ClientOptions {
  * Import the endpoint handlers to derive the types for the client.
  */
 import { authenticate as api_auth_authenticate_authenticate } from "~backend/auth/authenticate";
+import { autoLogin as api_auth_auto_login_autoLogin } from "~backend/auth/auto-login";
+import { clearLoginCookie as api_auth_clear_login_cookie_clearLoginCookie } from "~backend/auth/clear-login-cookie";
 import { getCountries as api_auth_countries_getCountries } from "~backend/auth/countries";
 import { forgotPassword as api_auth_forgot_password_forgotPassword } from "~backend/auth/forgot-password";
 import { getCountryByIp as api_auth_ip_country_getCountryByIp } from "~backend/auth/ip-country";
 import { login as api_auth_login_login } from "~backend/auth/login";
 import { logout as api_auth_logout_logout } from "~backend/auth/logout";
 import { register as api_auth_register_register } from "~backend/auth/register";
+import { setLoginCookie as api_auth_set_login_cookie_setLoginCookie } from "~backend/auth/set-login-cookie";
 
 export namespace auth {
 
@@ -102,12 +105,15 @@ export namespace auth {
         constructor(baseClient: BaseClient) {
             this.baseClient = baseClient
             this.authenticate = this.authenticate.bind(this)
+            this.autoLogin = this.autoLogin.bind(this)
+            this.clearLoginCookie = this.clearLoginCookie.bind(this)
             this.forgotPassword = this.forgotPassword.bind(this)
             this.getCountries = this.getCountries.bind(this)
             this.getCountryByIp = this.getCountryByIp.bind(this)
             this.login = this.login.bind(this)
             this.logout = this.logout.bind(this)
             this.register = this.register.bind(this)
+            this.setLoginCookie = this.setLoginCookie.bind(this)
         }
 
         /**
@@ -117,6 +123,24 @@ export namespace auth {
             // Now make the actual call to the API
             const resp = await this.baseClient.callTypedAPI(`/api/authenticate`, {method: "POST", body: JSON.stringify(params)})
             return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_auth_authenticate_authenticate>
+        }
+
+        /**
+         * Attempts to auto-login using encrypted credentials from cookie
+         */
+        public async autoLogin(params: RequestType<typeof api_auth_auto_login_autoLogin>): Promise<ResponseType<typeof api_auth_auto_login_autoLogin>> {
+            // Now make the actual call to the API
+            const resp = await this.baseClient.callTypedAPI(`/api/auto-login`, {method: "POST", body: undefined})
+            return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_auth_auto_login_autoLogin>
+        }
+
+        /**
+         * Clears the login credentials cookie
+         */
+        public async clearLoginCookie(): Promise<ResponseType<typeof api_auth_clear_login_cookie_clearLoginCookie>> {
+            // Now make the actual call to the API
+            const resp = await this.baseClient.callTypedAPI(`/api/clear-login-cookie`, {method: "POST", body: undefined})
+            return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_auth_clear_login_cookie_clearLoginCookie>
         }
 
         /**
@@ -175,23 +199,18 @@ export namespace auth {
          * Registers a new user account.
          */
         public async register(params: RequestType<typeof api_auth_register_register>): Promise<ResponseType<typeof api_auth_register_register>> {
-            // Convert our params into the objects we need for the request
-            const headers = makeRecord<string, string>({
-                "x-forwarded-for": params.forwardedFor,
-                "x-real-ip":       params.realIp,
-                "x-remote-addr":   params.remoteAddr,
-            })
-
-            // Construct the body with only the fields which we want encoded within the body (excluding query string or header fields)
-            const body: Record<string, any> = {
-                currency: params.currency,
-                email:    params.email,
-                password: params.password,
-            }
-
             // Now make the actual call to the API
-            const resp = await this.baseClient.callTypedAPI(`/api/register-user`, {headers, method: "POST", body: JSON.stringify(body)})
+            const resp = await this.baseClient.callTypedAPI(`/api/register-user`, {method: "POST", body: JSON.stringify(params)})
             return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_auth_register_register>
+        }
+
+        /**
+         * Encrypts login credentials and sets a secure cookie for auto-login
+         */
+        public async setLoginCookie(params: RequestType<typeof api_auth_set_login_cookie_setLoginCookie>): Promise<ResponseType<typeof api_auth_set_login_cookie_setLoginCookie>> {
+            // Now make the actual call to the API
+            const resp = await this.baseClient.callTypedAPI(`/api/set-login-cookie`, {method: "POST", body: JSON.stringify(params)})
+            return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_auth_set_login_cookie_setLoginCookie>
         }
     }
 }

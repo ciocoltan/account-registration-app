@@ -23,8 +23,9 @@ function AppContent() {
 
   if (isLoading) {
     return (
-      <div className="bg-white flex items-center justify-center min-h-screen">
+      <div className="bg-white flex flex-col items-center justify-center min-h-screen">
         <Spinner />
+        <p className="text-gray-600 mt-4">Checking your session...</p>
       </div>
     );
   }
