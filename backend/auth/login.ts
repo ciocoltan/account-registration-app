@@ -99,14 +99,7 @@ export const login = api<LoginRequest, LoginResponse>(
     console.log(`Error: ${error.message || error}`);
     throw APIError.internal("Registration service unavailable");
   }
-      // console.log("Error:", error);
-      // console.log("Error stack:", error.stack);
-      
-      // if (error.code) {
-      //   throw error; // Re-throw APIError
-      // }
-      // console.error("Login API error:", error);
-      // throw APIError.internal("Login service unavailable");
+     
     }
   }
 );
