@@ -77,7 +77,7 @@ export const getCountries = api<void, GetCountriesResponse>(
         countries: Array.isArray(countries) ? countries : []
       };
 
-      console.log("Final response:", JSON.stringify(successResponse, null, 2));
+      //console.log("Final response:", JSON.stringify(successResponse, null, 2));
       console.log("=== END SYNTELLICORE GET COUNTRIES API ===");
 
       return successResponse;
