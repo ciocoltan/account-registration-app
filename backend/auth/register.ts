@@ -174,11 +174,6 @@ export const register = api<RegisterRequest, RegisterResponse>(
       const responseText = await response.text();
       console.log("Raw Response Body:", responseText);
 
-      if (!response.ok) {
-        console.log("Request failed with status:", response.status);
-        throw APIError.internal("Registration failed");
-      }
-
       let data;
       try {
         data = JSON.parse(responseText);
@@ -188,7 +183,24 @@ export const register = api<RegisterRequest, RegisterResponse>(
         throw APIError.internal("Invalid response format from registration service");
       }
       
-      // Check if the response indicates an error
+      // Check if the API returned success: false
+      if (data.success === false) {
+        console.log("API returned success: false");
+        const errorMessage = data.info?.message || "Registration failed";
+        
+        // Handle specific error cases
+        if (errorMessage.toLowerCase().includes('email exists')) {
+          throw APIError.alreadyExists("User with this email already exists");
+        }
+        if (errorMessage.toLowerCase().includes('invalid password length')) {
+          throw APIError.invalidArgument("Password must be at least 8 characters long");
+        }
+        
+        // Generic error for other cases
+        throw APIError.invalidArgument(errorMessage);
+      }
+
+      // Check if the response indicates an error (legacy check)
       if (data.error) {
         console.log("API returned error:", data.error);
         if (data.error.toLowerCase().includes('email') && data.error.toLowerCase().includes('exists')) {
