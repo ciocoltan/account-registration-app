@@ -35,27 +35,13 @@ export const getCountries = api<void, GetCountriesResponse>(
         "api_key": syntelliCoreApiKey(),
       };
 
-      // Log the API request details
-      console.log("=== SYNTELLICORE GET COUNTRIES API REQUEST ===");
-      //console.log("URL:", requestUrl);
-      //console.log("Method: POST");
-      //console.log("Headers:", JSON.stringify(requestHeaders, null, 2));
-      //console.log("Body (FormData):", Object.fromEntries(formData.entries()));
-      //console.log("Raw FormData string:", formData.toString());
-
       const response = await fetch(requestUrl, {
         method: "POST",
         headers: requestHeaders,
         body: formData,
       });
-
-      // Log the response details
-      console.log("=== SYNTELLICORE GET COUNTRIES API RESPONSE ===");
-      //console.log("Status:", response.status);
-      //console.log("Status Text:", response.statusText);
       
       const responseText = await response.text();
-      //console.log("Raw Response Body:", responseText);
 
       if (!response.ok) {
         console.log("Request failed with status:", response.status);
@@ -65,20 +51,15 @@ export const getCountries = api<void, GetCountriesResponse>(
       let data;
       try {
         data = JSON.parse(responseText);
-        //console.log("Parsed Response JSON:", JSON.stringify(data, null, 2));
       } catch (parseError) {
         console.log("Failed to parse response as JSON:", parseError);
         throw APIError.internal("Invalid response format from countries service");
       }
       
-      const countries = data.data || [];
-      
+      const countries = data.data || [];      
       const successResponse = {
         countries: Array.isArray(countries) ? countries : []
       };
-
-      //console.log("Final response:", JSON.stringify(successResponse, null, 2));
-      console.log("=== END SYNTELLICORE GET COUNTRIES API ===");
 
       return successResponse;
     } catch (error: any) {
