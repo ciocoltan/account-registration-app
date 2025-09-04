@@ -182,7 +182,7 @@ export const register = api<RegisterRequest, RegisterResponse>(
         user: data.user || data.customer_no
       };
 
-      //console.log("Final response:", JSON.stringify(successResponse, null, 2));
+      console.log("Final response:", JSON.stringify(successResponse, null, 2));
       console.log("=== END SYNTELLICORE REGISTER API ===");
 
       return successResponse;
