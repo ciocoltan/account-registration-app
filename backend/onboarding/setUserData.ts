@@ -42,9 +42,6 @@ export const setUserData = api<SetUserDataRequest, SetUserDataResponse>(
 
       console.log("=== SYNTELLICORE SET USER DATA API REQUEST ===");
       console.log("URL:", requestUrl);
-      console.log("Method: POST");
-      console.log("Headers:", JSON.stringify(requestHeaders, null, 2));
-      console.log("Body (FormData):", Object.fromEntries(formData.entries()));
 
       const response = await fetch(requestUrl, {
         method: "POST",
@@ -53,8 +50,6 @@ export const setUserData = api<SetUserDataRequest, SetUserDataResponse>(
       });
 
       console.log("=== SYNTELLICORE SET USER DATA API RESPONSE ===");
-      console.log("Status:", response.status);
-      console.log("Status Text:", response.statusText);
 
       const responseText = await response.text();
       console.log("Raw Response Body:", responseText);
