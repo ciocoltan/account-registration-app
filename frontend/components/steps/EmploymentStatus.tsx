@@ -1,0 +1,43 @@
+import React from 'react';
+import { FormData } from '../MultiStepContainer';
+
+interface EmploymentStatusProps {
+  formData: FormData;
+  onSaveData: (data: FormData) => void;
+  onNext: () => void;
+}
+
+function EmploymentStatus({ formData, onSaveData, onNext }: EmploymentStatusProps) {
+  const handleOptionClick = (value: string) => {
+    onSaveData({ employmentStatus: value });
+    setTimeout(onNext, 200);
+  };
+
+  const options = [
+    { value: 'employed', label: 'Employed' },
+    { value: 'self-employed', label: 'Self-employed' },
+    { value: 'retired', label: 'Retired' },
+    { value: 'unemployed', label: 'Unemployed' },
+    { value: 'student', label: 'Student' },
+  ];
+
+  return (
+    <div className="text-center">
+      <h2 className="text-2xl font-bold text-gray-800 mb-6">What is your current employment status?</h2>
+      <div className="space-y-3">
+        {options.map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            onClick={() => handleOptionClick(option.value)}
+            className="step-option-btn w-full py-3 px-4 rounded-full bg-blue-50 text-gray-800 border border-transparent font-medium text-center transition-colors duration-200 hover:bg-blue-100"
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default EmploymentStatus;

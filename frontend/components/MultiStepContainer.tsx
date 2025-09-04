@@ -30,31 +30,29 @@ function MultiStepContainer({ initialStep }: MultiStepContainerProps) {
     setFormData(prev => ({ ...prev, ...data }));
   };
 
-  const saveStep1Data = async () => {
+  const saveCurrentStepToBackend = async (stepId: string, data: FormData) => {
     const jwt = localStorage.getItem('jwt');
     if (!jwt) return;
 
-    const dataToSave = {
-      residenceCountry: formData['residenceCountry'] || '',
-      notUsCitizen: formData['notUsCitizen'] || false,
-      agreedToTerms: formData['agreedToTerms'] || false,
-      publicOfficialStatus: formData['publicOfficialStatus'] || 'None of the above',
-    };
-
     try {
-      await backend.onboarding.saveStep1({ data: dataToSave });
+      // Save data based on step
+      if (stepId.startsWith('1-')) {
+        await backend.onboarding.saveStep1({ data });
+      } else if (stepId.startsWith('2-')) {
+        await backend.onboarding.saveStep2({ data });
+      } else if (stepId.startsWith('3-')) {
+        await backend.onboarding.saveStep3({ data });
+      }
     } catch (error) {
-      console.error('Error saving Step 1 data:', error);
+      console.error(`Error saving ${stepId} data:`, error);
     }
   };
 
   const goToNextStep = async () => {
     const currentStepId = stepFlow[currentStepIndex];
     
-    // Check if we are finishing the last substep of step 1
-    if (currentStepId === '1-2') {
-      await saveStep1Data();
-    }
+    // Save current step data to backend
+    await saveCurrentStepToBackend(currentStepId, formData);
 
     if (currentStepIndex < stepFlow.length - 1) {
       const nextIndex = currentStepIndex + 1;
