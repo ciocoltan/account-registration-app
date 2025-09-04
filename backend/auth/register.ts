@@ -58,7 +58,6 @@ async function getCountryIdByCode(countryCode: string): Promise<string> {
       );
       
       if (country) {
-        console.log("Found country:", country);
         return country.country_id || country.id || "3";
       }
     }
@@ -177,7 +176,6 @@ export const register = api<RegisterRequest, RegisterResponse>(
       let data;
       try {
         data = JSON.parse(responseText);
-        console.log("Parsed Response JSON:", JSON.stringify(data, null, 2));
       } catch (parseError) {
         console.log("Failed to parse response as JSON:", parseError);
         throw APIError.internal("Invalid response format from registration service");
