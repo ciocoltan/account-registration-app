@@ -157,11 +157,6 @@ function RegistrationForm({ onShowLogin }: RegistrationFormProps) {
               Login here
             </button>
           </p>
-          {countryCode !== 'US' && (
-            <p className="text-xs text-gray-400 mt-1">
-              Detected location: {countryCode}
-            </p>
-          )}
         </div>
         
         <form onSubmit={handleSubmit} className="mt-8 space-y-4">
