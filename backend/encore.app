@@ -1,0 +1,1 @@
+{"id": "account-registration-app-tpai", "lang": "typescript"}
