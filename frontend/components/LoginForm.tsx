@@ -1,18 +1,15 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import PasswordInput from './PasswordInput';
 import { useAuth } from '../contexts/AuthContext';
-
-interface LoginFormProps {
-  onShowRegister: () => void;
-  onShowForgotPassword: () => void;
-}
 
 interface FormErrors {
   email?: string;
   general?: string;
 }
 
-function LoginForm({ onShowRegister, onShowForgotPassword }: LoginFormProps) {
+function LoginForm() {
+  const navigate = useNavigate();
   const { login } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
@@ -62,7 +59,7 @@ function LoginForm({ onShowRegister, onShowForgotPassword }: LoginFormProps) {
         <p className="text-gray-500 mt-2">
           Don't have an account?{' '}
           <button 
-            onClick={onShowRegister}
+            onClick={() => navigate('/register')}
             className="font-medium text-blue-600 hover:text-blue-500"
           >
             Register here
@@ -119,7 +116,7 @@ function LoginForm({ onShowRegister, onShowForgotPassword }: LoginFormProps) {
           
           <button
             type="button"
-            onClick={onShowForgotPassword}
+            onClick={() => navigate('/forgot-password')}
             className="text-sm text-blue-600 hover:text-blue-500 font-medium"
           >
             Forgot your password?

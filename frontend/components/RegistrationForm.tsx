@@ -1,11 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { CheckCircle } from 'lucide-react';
 import PasswordInput from './PasswordInput';
 import { useAuth } from '../contexts/AuthContext';
-
-interface RegistrationFormProps {
-  onShowLogin: () => void;
-}
 
 interface FormErrors {
   email?: string;
@@ -14,7 +11,8 @@ interface FormErrors {
   general?: string;
 }
 
-function RegistrationForm({ onShowLogin }: RegistrationFormProps) {
+function RegistrationForm() {
+  const navigate = useNavigate();
   const { register } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
@@ -147,7 +145,7 @@ function RegistrationForm({ onShowLogin }: RegistrationFormProps) {
           <p className="text-gray-500 mt-2">
             Already have an account?{' '}
             <button 
-              onClick={onShowLogin}
+              onClick={() => navigate('/login')}
               className="font-medium text-blue-600 hover:text-blue-500"
             >
               Login here

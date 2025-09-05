@@ -1,17 +1,14 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import backend from '~backend/client';
-
-interface ForgotPasswordFormProps {
-  onShowLogin: () => void;
-  onShowRegister: () => void;
-}
 
 interface FormErrors {
   email?: string;
   general?: string;
 }
 
-function ForgotPasswordForm({ onShowLogin, onShowRegister }: ForgotPasswordFormProps) {
+function ForgotPasswordForm() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
   });
@@ -88,7 +85,7 @@ function ForgotPasswordForm({ onShowLogin, onShowRegister }: ForgotPasswordFormP
           </p>
           <div className="space-y-3">
             <button
-              onClick={onShowLogin}
+              onClick={() => navigate('/login')}
               className="w-full flex justify-center py-3 px-4 border border-transparent rounded-full shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700"
             >
               Back to Login
@@ -96,7 +93,7 @@ function ForgotPasswordForm({ onShowLogin, onShowRegister }: ForgotPasswordFormP
             <p className="text-sm text-gray-500">
               Don't have an account?{' '}
               <button 
-                onClick={onShowRegister}
+                onClick={() => navigate('/register')}
                 className="font-medium text-blue-600 hover:text-blue-500"
               >
                 Register here
@@ -156,7 +153,7 @@ function ForgotPasswordForm({ onShowLogin, onShowRegister }: ForgotPasswordFormP
         <div className="text-center space-y-2">
           <button
             type="button"
-            onClick={onShowLogin}
+            onClick={() => navigate('/login')}
             className="text-sm text-blue-600 hover:text-blue-500 font-medium"
           >
             Back to Login
@@ -164,7 +161,7 @@ function ForgotPasswordForm({ onShowLogin, onShowRegister }: ForgotPasswordFormP
           <p className="text-sm text-gray-500">
             Don't have an account?{' '}
             <button 
-              onClick={onShowRegister}
+              onClick={() => navigate('/register')}
               className="font-medium text-blue-600 hover:text-blue-500"
             >
               Register here

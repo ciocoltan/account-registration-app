@@ -18,6 +18,16 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+function getCookie(name: string): string | null {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) {
+    const cookieValue = parts.pop()?.split(';').shift();
+    return cookieValue ? decodeURIComponent(cookieValue) : null;
+  }
+  return null;
+}
+
 interface AuthProviderProps {
   children: ReactNode;
 }
@@ -49,6 +59,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     // Attempt auto-login on app load
     const attemptAutoLogin = async () => {
+      const loginCredsCookie = getCookie('login_creds');
+      if (!loginCredsCookie) {
+        console.log('No login credentials cookie found. Skipping auto-login.');
+        setIsLoading(false);
+        return;
+      }
+
       try {
         const response = await backend.auth.autoLogin({});
         
