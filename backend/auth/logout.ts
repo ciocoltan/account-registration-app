@@ -12,7 +12,7 @@ export interface LogoutRequest {
 export interface LogoutResponse {
   message: string;
   success: boolean;
-  loginCookie: Cookie<"login_creds">; // Return expired cookie to clear it
+  loginCookie: Cookie<"login_token">;
 }
 
 // Logs out a user by killing their access token and clearing login cookie
@@ -62,7 +62,7 @@ export const logout = api<LogoutRequest, LogoutResponse>(
       }
 
       // Create expired cookie to remove it from client
-      const expiredCookie: Cookie<"login_creds"> = {
+      const expiredCookie: Cookie<"login_token"> = {
         value: "",
         expires: new Date(0), // Expire immediately
         httpOnly: true,
