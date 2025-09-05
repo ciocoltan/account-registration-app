@@ -1,8 +1,25 @@
 import { api, APIError, Cookie } from "encore.dev/api";
 import { secret } from "encore.dev/config";
+import crypto from "crypto";
 
 const syntelliCoreUrl = secret("SyntelliCoreUrl");
 const syntelliCoreApiKey = secret("SyntelliCoreApiKey");
+const cookieEncryptionKey = secret("CookieEncryptionKey");
+
+// Utility: decrypt AES-GCM
+function decrypt(text: string): string {
+  const key = Buffer.from(cookieEncryptionKey(), "utf8");
+  const data = Buffer.from(text, "base64");
+
+  const iv = data.subarray(0, 12);
+  const tag = data.subarray(12, 28);
+  const encrypted = data.subarray(28);
+
+  const decipher = crypto.createDecipheriv("aes-256-gcm", key, iv);
+  decipher.setAuthTag(tag);
+  const decrypted = Buffer.concat([decipher.update(encrypted), decipher.final()]);
+  return decrypted.toString("utf8");
+}
 
 export interface AutoLoginRequest {
   loginCreds: Cookie<"login_creds">;
@@ -16,7 +33,6 @@ export interface AutoLoginResponse {
   success: boolean;
 }
 
-// Attempts to auto-login using encrypted credentials from cookie
 export const autoLogin = api<AutoLoginRequest, AutoLoginResponse>(
   { expose: true, method: "POST", path: "/api/auto-login" },
   async (req) => {
@@ -25,27 +41,32 @@ export const autoLogin = api<AutoLoginRequest, AutoLoginResponse>(
         throw APIError.unauthenticated("No login credentials found");
       }
 
-      // Decrypt the credentials
-      const credentialsString = Buffer.from(req.loginCreds.value, 'base64').toString('utf-8');
-      const [email, password] = credentialsString.split(':');
+      // 🔑 Decrypt cookie into email:password
+      let email: string, password: string;
+      try {
+        const credentialsString = decrypt(req.loginCreds.value);
+        [email, password] = credentialsString.split(":");
+      } catch {
+        throw APIError.unauthenticated("Invalid or corrupted credentials");
+      }
 
       if (!email || !password) {
         throw APIError.unauthenticated("Invalid credentials format");
       }
 
-      // Perform login using the decrypted credentials
+      // 🔄 Reuse login API
       const formData = new URLSearchParams();
-      formData.append('email', email);
-      formData.append('password', password);
+      formData.append("email", email);
+      formData.append("password", password);
 
       const requestUrl = `${syntelliCoreUrl()}/gateway/api/1/syntellicore.cfc?method=user_login`;
       const requestHeaders = {
-        "api_key": syntelliCoreApiKey(),
+        api_key: syntelliCoreApiKey(),
       };
 
       console.log("=== SYNTELLICORE AUTO-LOGIN API REQUEST ===");
       console.log("URL:", requestUrl);
-      console.log("Body (FormData):", { email, password: "***" });
+      console.log("Email:", email);
 
       const response = await fetch(requestUrl, {
         method: "POST",
@@ -53,13 +74,10 @@ export const autoLogin = api<AutoLoginRequest, AutoLoginResponse>(
         body: formData,
       });
 
-      console.log("=== SYNTELLICORE AUTO-LOGIN API RESPONSE ===");
-
       const responseText = await response.text();
       console.log("Raw Response Body:", responseText);
 
       if (!response.ok) {
-        console.log("Auto-login request failed with status:", response.status);
         throw APIError.unauthenticated("Auto-login failed - credentials may be invalid");
       }
 
@@ -70,39 +88,28 @@ export const autoLogin = api<AutoLoginRequest, AutoLoginResponse>(
         console.log("Failed to parse auto-login response as JSON:", parseError);
         throw APIError.internal("Invalid response format from auto-login service");
       }
-      
-      // Check if the response indicates success and extract authentication data
+
       if (!data.success || !data.data || !Array.isArray(data.data) || data.data.length === 0) {
-        console.log("Auto-login API returned error or invalid response structure");
         throw APIError.unauthenticated("Auto-login failed - credentials may be invalid");
       }
 
       const userData = data.data[0];
       if (!userData.authentication_token) {
-        console.log("Auto-login API returned success but missing authentication_token");
         throw APIError.unauthenticated("Auto-login failed - credentials may be invalid");
       }
-      
-      const successResponse = {
+
+      return {
         jwt: userData.authentication_token,
         message: "Auto-login successful",
         user: userData.user,
         access_token: userData.authentication_token,
-        success: true
+        success: true,
       };
-
-      console.log("=== END SYNTELLICORE AUTO-LOGIN API ===");
-
-      return successResponse;
     } catch (error: any) {
       console.log("=== SYNTELLICORE AUTO-LOGIN API ERROR ===");
-      console.log("Error:", error);
-      console.log("Error stack:", error.stack);
-      
-      if (error.code) {
-        throw error; // Re-throw APIError
-      }
-      console.error("Auto-login API error:", error);
+      console.error(error);
+
+      if (error instanceof APIError) throw error;
       throw APIError.unauthenticated("Auto-login service failed");
     }
   }
