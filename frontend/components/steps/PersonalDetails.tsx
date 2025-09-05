@@ -6,7 +6,7 @@ import type { Country } from '~backend/auth/countries';
 import Spinner from '../Spinner';
 
 const defaultCountries: Country[] = [
-  { country_id: 1, name: 'United States', iso_alpha2_code: 'US', iso_alpha3_code: 'USA', tel_country_code: '1', show_on_register: 1, currency: 'USD', currency_id: 1, brand_id: 1, zone: 'America' },
+  { country_id: 1, name: 'Afghanistan', iso_alpha2_code: 'AF', iso_alpha3_code: 'AFG', tel_country_code: '93', show_on_register: 1, currency: 'USD', currency_id: 1, brand_id: 1, zone: 'Asia' },
   { country_id: 2, name: 'United Kingdom', iso_alpha2_code: 'GB', iso_alpha3_code: 'GBR', tel_country_code: '44', show_on_register: 1, currency: 'GBP', currency_id: 2, brand_id: 1, zone: 'Europe' },
   { country_id: 3, name: 'Canada', iso_alpha2_code: 'CA', iso_alpha3_code: 'CAN', tel_country_code: '1', show_on_register: 1, currency: 'CAD', currency_id: 3, brand_id: 1, zone: 'America' },
   { country_id: 4, name: 'Australia', iso_alpha2_code: 'AU', iso_alpha3_code: 'AUS', tel_country_code: '61', show_on_register: 1, currency: 'AUD', currency_id: 4, brand_id: 1, zone: 'Oceania' },
