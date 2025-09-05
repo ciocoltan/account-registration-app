@@ -27,6 +27,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [authData, setAuthData] = useState<AuthData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Clear all user-specific localStorage data
+  const clearAllUserData = () => {
+    try {
+      // Get all localStorage keys
+      const keys = Object.keys(localStorage);
+      
+      // Clear form data and countries cache
+      keys.forEach(key => {
+        if (key.startsWith('form_data_') || key === 'countries_cache' || key === 'registration_country') {
+          localStorage.removeItem(key);
+        }
+      });
+      
+      console.log('All user data cleared from localStorage');
+    } catch (error) {
+      console.error('Failed to clear user data from localStorage:', error);
+    }
+  };
+
   useEffect(() => {
     // Attempt auto-login on app load
     const attemptAutoLogin = async () => {
@@ -46,6 +65,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
       } catch (error: any) {
         console.log('Auto-login failed or no saved credentials:', error.message);
+        // Clear all user data when auto-login fails
+        clearAllUserData();
+        
         // Clear any invalid cookies
         try {
           await backend.auth.clearLoginCookie();
@@ -101,6 +123,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const register = async (email: string, password: string, currency: string, countryCode: string) => {
     try {
+      // Save country code and currency to localStorage for later use
+      try {
+        localStorage.setItem('registration_country', JSON.stringify({
+          countryCode,
+          currency,
+          timestamp: Date.now()
+        }));
+        console.log('Registration country data saved to localStorage');
+      } catch (storageError) {
+        console.error('Failed to save registration country to localStorage:', storageError);
+      }
+
       // Register the user with auto-login
       const registerResponse = await backend.auth.register({
         email,
@@ -143,16 +177,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const logout = async () => {
     try {
-      // Clear form data from localStorage before logout
-      if (authData?.user) {
-        const storageKey = `form_data_${authData.user}`;
-        try {
-          localStorage.removeItem(storageKey);
-          console.log('Form data cleared from localStorage on logout');
-        } catch (error) {
-          console.error('Failed to clear form data on logout:', error);
-        }
-      }
+      // Clear all user-specific data from localStorage
+      clearAllUserData();
 
       // Clear the login cookie first
       await backend.auth.clearLoginCookie();

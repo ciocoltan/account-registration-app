@@ -34,7 +34,7 @@ const defaultPhoneCodes = ['93', '20', '27', '33', '34', '39', '44', '49', '52',
 function PersonalDetails() {
   const navigate = useNavigate();
   const backend = useBackend();
-  const { authData } = useAuth();
+  const { authData, isAuthenticated } = useAuth();
   const { formData, updateFormData } = useFormData();
   
   const [localFormData, setLocalFormData] = useState({
@@ -53,39 +53,122 @@ function PersonalDetails() {
   const [countries, setCountries] = useState<Country[]>(defaultCountries);
   const [phoneCodes, setPhoneCodes] = useState<string[]>(defaultPhoneCodes);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingCountries, setIsLoadingCountries] = useState(false);
 
-  useEffect(() => {
-    // Set defaults with initial data
-    setLocalFormData(prev => ({
-      ...prev,
-      nationality: prev.nationality || defaultCountries[0].country_id.toString(),
-      'phone-code': prev['phone-code'] || defaultCountries[0].tel_country_code,
-    }));
-
-    const fetchCountries = async () => {
-      try {
-        const response = await backend.auth.getCountries();
-        setCountries(response.countries);
+  // Load countries from cache or fetch from API
+  const loadCountries = async () => {
+    try {
+      // First, try to load from localStorage cache
+      const cachedCountries = localStorage.getItem('countries_cache');
+      if (cachedCountries) {
+        const { data, timestamp } = JSON.parse(cachedCountries);
+        // Check if cache is less than 24 hours old
+        const cacheAge = Date.now() - timestamp;
+        const oneDayInMs = 24 * 60 * 60 * 1000;
         
-        const uniquePhoneCodes = [...new Set(response.countries.map(c => c.tel_country_code).filter(Boolean))];
-        setPhoneCodes(uniquePhoneCodes.sort());
+        if (cacheAge < oneDayInMs) {
+          console.log('Loading countries from cache');
+          setCountries(data);
+          
+          const uniquePhoneCodes = [...new Set(data.map((c: Country) => c.tel_country_code).filter(Boolean))];
+          setPhoneCodes(uniquePhoneCodes.sort());
+          return data;
+        } else {
+          console.log('Countries cache expired, fetching fresh data');
+          localStorage.removeItem('countries_cache');
+        }
+      }
 
-        // Update defaults if we have better data from API
-        if (response.countries.length > 0) {
+      // If no cache or cache expired, fetch from API
+      console.log('Fetching countries from API');
+      setIsLoadingCountries(true);
+      
+      const response = await backend.auth.getCountries();
+      const fetchedCountries = response.countries;
+      
+      // Cache the countries data
+      try {
+        localStorage.setItem('countries_cache', JSON.stringify({
+          data: fetchedCountries,
+          timestamp: Date.now()
+        }));
+        console.log('Countries cached to localStorage');
+      } catch (cacheError) {
+        console.error('Failed to cache countries:', cacheError);
+      }
+
+      setCountries(fetchedCountries);
+      
+      const uniquePhoneCodes = [...new Set(fetchedCountries.map(c => c.tel_country_code).filter(Boolean))];
+      setPhoneCodes(uniquePhoneCodes.sort());
+      
+      return fetchedCountries;
+    } catch (error) {
+      console.error("Failed to fetch countries:", error);
+      // Keep default countries if API fails
+      return defaultCountries;
+    } finally {
+      setIsLoadingCountries(false);
+    }
+  };
+
+  // Auto-fill nationality based on registration country
+  const autoFillFromRegistration = (availableCountries: Country[]) => {
+    try {
+      const registrationData = localStorage.getItem('registration_country');
+      if (registrationData && !formData.nationality) {
+        const { countryCode } = JSON.parse(registrationData);
+        console.log('Auto-filling nationality from registration country:', countryCode);
+        
+        // Find the country by ISO code
+        const matchingCountry = availableCountries.find(c => 
+          c.iso_alpha2_code === countryCode || 
+          c.iso_alpha3_code === countryCode
+        );
+        
+        if (matchingCountry) {
+          console.log('Found matching country:', matchingCountry.name);
           setLocalFormData(prev => ({
             ...prev,
-            nationality: prev.nationality || response.countries[0].country_id.toString(),
-            'phone-code': prev['phone-code'] || response.countries[0].tel_country_code,
+            nationality: matchingCountry.country_id.toString(),
+            'phone-code': matchingCountry.tel_country_code
           }));
+          
+          // Update global form data as well
+          updateFormData({
+            nationality: matchingCountry.country_id.toString(),
+            'phone-code': matchingCountry.tel_country_code
+          });
         }
-      } catch (error) {
-        console.error("Failed to fetch countries:", error);
-        // Keep default countries if API fails
       }
+    } catch (error) {
+      console.error('Failed to auto-fill from registration data:', error);
+    }
+  };
+
+  useEffect(() => {
+    const initializeData = async () => {
+      // Load countries (from cache or API)
+      const loadedCountries = await loadCountries();
+      
+      // Set defaults if not already set from saved form data
+      if (!localFormData.nationality || !localFormData['phone-code']) {
+        const defaultCountry = loadedCountries[0] || defaultCountries[0];
+        setLocalFormData(prev => ({
+          ...prev,
+          nationality: prev.nationality || defaultCountry.country_id.toString(),
+          'phone-code': prev['phone-code'] || defaultCountry.tel_country_code,
+        }));
+      }
+      
+      // Auto-fill from registration if form is empty
+      autoFillFromRegistration(loadedCountries);
     };
 
-    fetchCountries();
-  }, [backend]);
+    if (isAuthenticated) {
+      initializeData();
+    }
+  }, [isAuthenticated, backend]);
 
   const handleInputChange = (name: string, value: string) => {
     setLocalFormData(prev => ({ ...prev, [name]: value }));
@@ -137,6 +220,7 @@ function PersonalDetails() {
       const month = String(localFormData['dob-month']).padStart(2, '0');
       const birth_dt = `${localFormData['dob-year']}/${day}/${month}`;
 
+      // Update CRM with user data
       await backend.onboarding.setUserData({
         user: authData.user,
         access_token: authData.accessToken,
@@ -148,8 +232,10 @@ function PersonalDetails() {
         birth_dt,
       });
 
-      // Save all form data before navigating
+      // Save all form data to localStorage before navigating
       updateFormData(localFormData);
+      
+      console.log('Personal details submitted successfully, navigating to next step');
       navigate('/en/apply/residence-address');
     } catch (error: any) {
       console.error("Failed to save user data:", error);
@@ -169,7 +255,7 @@ function PersonalDetails() {
 
   return (
     <>
-      {isSubmitting && <Spinner overlay />}
+      {(isSubmitting || isLoadingCountries) && <Spinner overlay />}
       
       <div className="space-y-3">
         <h2 className="text-2xl font-bold text-center text-gray-800">Personal Details</h2>
@@ -301,7 +387,7 @@ function PersonalDetails() {
               onChange={(e) => handleInputChange('phone-code', e.target.value)} 
               onKeyDown={(e) => handleKeyDown(e, 'phone')}
               className="form-input custom-bg-input block border rounded-l-lg py-2 px-3 focus:outline-none sm:text-sm w-1/3" 
-              style={{ backgroundColor: 'rgb(248, 249, 250)' }}
+              style={{ backgroundColor: 'rgb(248, 249, 750)' }}
               disabled={isSubmitting}
             >
               <option value="">Code</option>
@@ -320,7 +406,7 @@ function PersonalDetails() {
                 }
               }}
               className={`form-input custom-bg-input block w-full border rounded-r-lg py-2 px-3 focus:outline-none sm:text-sm ${errors.phone ? 'border-red-500' : ''}`} 
-              style={{ backgroundColor: 'rgb(248, 249, 250)' }} 
+              style={{ backgroundColor: 'rgb(248, 249, 750)' }} 
               placeholder="Phone"
               disabled={isSubmitting}
             />
