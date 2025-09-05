@@ -1,10 +1,13 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useFormData } from '../../contexts/FormDataContext';
 
 function InvestmentSource() {
   const navigate = useNavigate();
+  const { updateFormData } = useFormData();
 
   const handleOptionClick = (value: string) => {
+    updateFormData({ investmentSource: value });
     setTimeout(() => {
       navigate('/en/apply/professional-experience');
     }, 200);

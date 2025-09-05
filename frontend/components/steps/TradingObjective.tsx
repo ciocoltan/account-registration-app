@@ -1,10 +1,13 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useFormData } from '../../contexts/FormDataContext';
 
 function TradingObjective() {
   const navigate = useNavigate();
+  const { updateFormData } = useFormData();
 
   const handleOptionClick = (value: string) => {
+    updateFormData({ tradingObjective: value });
     setTimeout(() => {
       navigate('/en/apply/verification');
     }, 200);

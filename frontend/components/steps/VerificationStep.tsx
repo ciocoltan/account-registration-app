@@ -1,14 +1,20 @@
 import React from 'react';
 import { Clipboard } from 'lucide-react';
 import { useBackend } from '../../hooks/useBackend';
+import { useFormData } from '../../contexts/FormDataContext';
 
 function VerificationStep() {
   const backend = useBackend();
+  const { clearFormData } = useFormData();
 
   const handleInitiateKyc = async () => {
     try {
       const response = await backend.kyc.initiate();
       console.log('KYC initiated:', response);
+      
+      // Clear form data upon successful completion
+      clearFormData();
+      
       // Handle KYC initiation success
     } catch (error) {
       console.error('Failed to initiate KYC:', error);

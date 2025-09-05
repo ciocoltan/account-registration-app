@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useBackend } from '../../hooks/useBackend';
 import { useAuth } from '../../contexts/AuthContext';
+import { useFormData } from '../../contexts/FormDataContext';
 import type { Country } from '~backend/auth/countries';
 import Spinner from '../Spinner';
 
@@ -34,17 +35,20 @@ function PersonalDetails() {
   const navigate = useNavigate();
   const backend = useBackend();
   const { authData } = useAuth();
-  const [formData, setFormData] = useState({
-    title: 'Mr',
-    'first-name': '',
-    'last-name': '',
-    'dob-day': '',
-    'dob-month': '',
-    'dob-year': '',
-    nationality: '',
-    'phone-code': '',
-    phone: ''
+  const { formData, updateFormData } = useFormData();
+  
+  const [localFormData, setLocalFormData] = useState({
+    title: formData.title || 'Mr',
+    'first-name': formData['first-name'] || '',
+    'last-name': formData['last-name'] || '',
+    'dob-day': formData['dob-day'] || '',
+    'dob-month': formData['dob-month'] || '',
+    'dob-year': formData['dob-year'] || '',
+    nationality: formData.nationality || '',
+    'phone-code': formData['phone-code'] || '',
+    phone: formData.phone || ''
   });
+  
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [countries, setCountries] = useState<Country[]>(defaultCountries);
   const [phoneCodes, setPhoneCodes] = useState<string[]>(defaultPhoneCodes);
@@ -52,7 +56,7 @@ function PersonalDetails() {
 
   useEffect(() => {
     // Set defaults with initial data
-    setFormData(prev => ({
+    setLocalFormData(prev => ({
       ...prev,
       nationality: prev.nationality || defaultCountries[0].country_id.toString(),
       'phone-code': prev['phone-code'] || defaultCountries[0].tel_country_code,
@@ -68,7 +72,7 @@ function PersonalDetails() {
 
         // Update defaults if we have better data from API
         if (response.countries.length > 0) {
-          setFormData(prev => ({
+          setLocalFormData(prev => ({
             ...prev,
             nationality: prev.nationality || response.countries[0].country_id.toString(),
             'phone-code': prev['phone-code'] || response.countries[0].tel_country_code,
@@ -84,7 +88,10 @@ function PersonalDetails() {
   }, [backend]);
 
   const handleInputChange = (name: string, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setLocalFormData(prev => ({ ...prev, [name]: value }));
+    
+    // Update global form data
+    updateFormData({ [name]: value });
     
     if (errors[name]) {
       setErrors(prev => {
@@ -107,10 +114,10 @@ function PersonalDetails() {
 
   const validateStep = (): boolean => {
     const newErrors: Record<string, string> = {};
-    if (!formData['first-name']) newErrors['first-name'] = 'First name is required';
-    if (!formData['last-name']) newErrors['last-name'] = 'Last name is required';
-    if (!formData['phone']) newErrors['phone'] = 'Phone number is required';
-    if (!formData['dob-day'] || !formData['dob-month'] || !formData['dob-year']) {
+    if (!localFormData['first-name']) newErrors['first-name'] = 'First name is required';
+    if (!localFormData['last-name']) newErrors['last-name'] = 'Last name is required';
+    if (!localFormData['phone']) newErrors['phone'] = 'Phone number is required';
+    if (!localFormData['dob-day'] || !localFormData['dob-month'] || !localFormData['dob-year']) {
       newErrors['dob'] = 'Date of birth is required';
     }
     setErrors(newErrors);
@@ -126,21 +133,23 @@ function PersonalDetails() {
 
     setIsSubmitting(true);
     try {
-      const day = String(formData['dob-day']).padStart(2, '0');
-      const month = String(formData['dob-month']).padStart(2, '0');
-      const birth_dt = `${formData['dob-year']}/${day}/${month}`;
+      const day = String(localFormData['dob-day']).padStart(2, '0');
+      const month = String(localFormData['dob-month']).padStart(2, '0');
+      const birth_dt = `${localFormData['dob-year']}/${day}/${month}`;
 
       await backend.onboarding.setUserData({
         user: authData.user,
         access_token: authData.accessToken,
-        fname: formData['first-name'],
-        lname: formData['last-name'],
-        tel1: formData.phone,
-        tel1_country_code: formData['phone-code'],
-        cou_id: formData.nationality,
+        fname: localFormData['first-name'],
+        lname: localFormData['last-name'],
+        tel1: localFormData.phone,
+        tel1_country_code: localFormData['phone-code'],
+        cou_id: localFormData.nationality,
         birth_dt,
       });
 
+      // Save all form data before navigating
+      updateFormData(localFormData);
       navigate('/en/apply/residence-address');
     } catch (error: any) {
       console.error("Failed to save user data:", error);
@@ -171,7 +180,7 @@ function PersonalDetails() {
           <select
             id="title"
             name="title"
-            value={formData.title}
+            value={localFormData.title}
             onChange={(e) => handleInputChange('title', e.target.value)}
             onKeyDown={(e) => handleKeyDown(e, 'first-name')}
             className="form-input custom-bg-input mt-1 block w-full border rounded-lg py-2 px-3 focus:outline-none sm:text-sm"
@@ -191,11 +200,11 @@ function PersonalDetails() {
               type="text"
               name="first-name"
               id="first-name"
-              value={formData['first-name']}
+              value={localFormData['first-name']}
               onChange={(e) => handleInputChange('first-name', e.target.value)}
               onKeyDown={(e) => handleKeyDown(e, 'last-name')}
               className={`form-input custom-bg-input mt-1 block w-full border rounded-lg py-2 px-3 focus:outline-none sm:text-sm ${errors['first-name'] ? 'border-red-500' : ''}`}
-              style={{ backgroundColor: 'rgb(248, 249, 250)' }}
+              style={{ backgroundColor: 'rgb(248, 249, 750)' }}
               placeholder="First name"
               disabled={isSubmitting}
             />
@@ -207,7 +216,7 @@ function PersonalDetails() {
               type="text"
               name="last-name"
               id="last-name"
-              value={formData['last-name']}
+              value={localFormData['last-name']}
               onChange={(e) => handleInputChange('last-name', e.target.value)}
               onKeyDown={(e) => handleKeyDown(e, 'dob-day')}
               className={`form-input custom-bg-input mt-1 block w-full border rounded-lg py-2 px-3 focus:outline-none sm:text-sm ${errors['last-name'] ? 'border-red-500' : ''}`}
@@ -225,7 +234,7 @@ function PersonalDetails() {
             <select 
               id="dob-day" 
               name="dob-day" 
-              value={formData['dob-day']} 
+              value={localFormData['dob-day']} 
               onChange={(e) => handleInputChange('dob-day', e.target.value)} 
               onKeyDown={(e) => handleKeyDown(e, 'dob-month')}
               className="form-input custom-bg-input block w-full border rounded-lg py-2 px-3 focus:outline-none sm:text-sm" 
@@ -238,7 +247,7 @@ function PersonalDetails() {
             <select 
               id="dob-month" 
               name="dob-month" 
-              value={formData['dob-month']} 
+              value={localFormData['dob-month']} 
               onChange={(e) => handleInputChange('dob-month', e.target.value)} 
               onKeyDown={(e) => handleKeyDown(e, 'dob-year')}
               className="form-input custom-bg-input block w-full border rounded-lg py-2 px-3 focus:outline-none sm:text-sm" 
@@ -251,7 +260,7 @@ function PersonalDetails() {
             <select 
               id="dob-year" 
               name="dob-year" 
-              value={formData['dob-year']} 
+              value={localFormData['dob-year']} 
               onChange={(e) => handleInputChange('dob-year', e.target.value)} 
               onKeyDown={(e) => handleKeyDown(e, 'nationality')}
               className="form-input custom-bg-input block w-full border rounded-lg py-2 px-3 focus:outline-none sm:text-sm" 
@@ -270,7 +279,7 @@ function PersonalDetails() {
           <select 
             id="nationality" 
             name="nationality" 
-            value={formData.nationality} 
+            value={localFormData.nationality} 
             onChange={(e) => handleInputChange('nationality', e.target.value)} 
             onKeyDown={(e) => handleKeyDown(e, 'phone-code')}
             className="form-input custom-bg-input mt-1 block w-full border rounded-lg py-2 px-3 focus:outline-none sm:text-sm" 
@@ -288,7 +297,7 @@ function PersonalDetails() {
             <select 
               id="phone-code" 
               name="phone-code" 
-              value={formData['phone-code']} 
+              value={localFormData['phone-code']} 
               onChange={(e) => handleInputChange('phone-code', e.target.value)} 
               onKeyDown={(e) => handleKeyDown(e, 'phone')}
               className="form-input custom-bg-input block border rounded-l-lg py-2 px-3 focus:outline-none sm:text-sm w-1/3" 
@@ -302,7 +311,7 @@ function PersonalDetails() {
               type="tel" 
               name="phone" 
               id="phone" 
-              value={formData.phone} 
+              value={localFormData.phone} 
               onChange={(e) => handleInputChange('phone', e.target.value)} 
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {

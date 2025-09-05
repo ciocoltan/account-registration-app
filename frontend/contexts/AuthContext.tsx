@@ -143,6 +143,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const logout = async () => {
     try {
+      // Clear form data from localStorage before logout
+      if (authData?.user) {
+        const storageKey = `form_data_${authData.user}`;
+        try {
+          localStorage.removeItem(storageKey);
+          console.log('Form data cleared from localStorage on logout');
+        } catch (error) {
+          console.error('Failed to clear form data on logout:', error);
+        }
+      }
+
       // Clear the login cookie first
       await backend.auth.clearLoginCookie();
       

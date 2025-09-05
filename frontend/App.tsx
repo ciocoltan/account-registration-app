@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { FormDataProvider } from './contexts/FormDataContext';
 import AuthContainer from './components/AuthContainer';
 import MultiStepContainer from './components/MultiStepContainer';
 import PersonalDetails from './components/steps/PersonalDetails';
@@ -36,25 +37,27 @@ function AppContent() {
         {!isAuthenticated ? (
           <AuthContainer />
         ) : (
-          <Routes>
-            <Route path="/en/apply" element={<MultiStepContainer />}>
-              <Route index element={<Navigate to="personal-details" replace />} />
-              <Route path="personal-details" element={<PersonalDetails />} />
-              <Route path="residence-address" element={<ResidenceAddress />} />
-              <Route path="public-official-status" element={<PublicOfficialStatus />} />
-              <Route path="employment-status" element={<EmploymentStatus />} />
-              <Route path="industry" element={<Industry />} />
-              <Route path="annual-income" element={<AnnualIncome />} />
-              <Route path="available-to-invest" element={<AvailableToInvest />} />
-              <Route path="plan-to-invest" element={<PlanToInvest />} />
-              <Route path="investment-source" element={<InvestmentSource />} />
-              <Route path="professional-experience" element={<ProfessionalExperience />} />
-              <Route path="risk-tolerance" element={<RiskTolerance />} />
-              <Route path="trading-objective" element={<TradingObjective />} />
-              <Route path="verification" element={<VerificationStep />} />
-            </Route>
-            <Route path="*" element={<Navigate to="/en/apply" />} />
-          </Routes>
+          <FormDataProvider>
+            <Routes>
+              <Route path="/en/apply" element={<MultiStepContainer />}>
+                <Route index element={<Navigate to="personal-details" replace />} />
+                <Route path="personal-details" element={<PersonalDetails />} />
+                <Route path="residence-address" element={<ResidenceAddress />} />
+                <Route path="public-official-status" element={<PublicOfficialStatus />} />
+                <Route path="employment-status" element={<EmploymentStatus />} />
+                <Route path="industry" element={<Industry />} />
+                <Route path="annual-income" element={<AnnualIncome />} />
+                <Route path="available-to-invest" element={<AvailableToInvest />} />
+                <Route path="plan-to-invest" element={<PlanToInvest />} />
+                <Route path="investment-source" element={<InvestmentSource />} />
+                <Route path="professional-experience" element={<ProfessionalExperience />} />
+                <Route path="risk-tolerance" element={<RiskTolerance />} />
+                <Route path="trading-objective" element={<TradingObjective />} />
+                <Route path="verification" element={<VerificationStep />} />
+              </Route>
+              <Route path="*" element={<Navigate to="/en/apply" />} />
+            </Routes>
+          </FormDataProvider>
         )}
       </div>
     </BrowserRouter>

@@ -1,17 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useFormData } from '../../contexts/FormDataContext';
 
 function PublicOfficialStatus() {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    publicOfficialStatus: ''
+  const { formData, updateFormData } = useFormData();
+  const [localFormData, setLocalFormData] = useState({
+    publicOfficialStatus: formData.publicOfficialStatus || ''
   });
 
   const handleInputChange = (name: string, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setLocalFormData(prev => ({ ...prev, [name]: value }));
+    // Update global form data
+    updateFormData({ [name]: value });
   };
 
   const handleNext = () => {
+    // Save all form data before navigating
+    updateFormData(localFormData);
     navigate('/en/apply/employment-status');
   };
 
@@ -27,7 +33,7 @@ function PublicOfficialStatus() {
             type="radio"
             name="publicOfficialStatus"
             value="Foreign Public Officials"
-            checked={formData.publicOfficialStatus === 'Foreign Public Officials'}
+            checked={localFormData.publicOfficialStatus === 'Foreign Public Officials'}
             onChange={(e) => handleInputChange('publicOfficialStatus', e.target.value)}
             className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
           />
@@ -42,7 +48,7 @@ function PublicOfficialStatus() {
             type="radio"
             name="publicOfficialStatus"
             value="Domestic Public Officials"
-            checked={formData.publicOfficialStatus === 'Domestic Public Officials'}
+            checked={localFormData.publicOfficialStatus === 'Domestic Public Officials'}
             onChange={(e) => handleInputChange('publicOfficialStatus', e.target.value)}
             className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
           />
@@ -57,7 +63,7 @@ function PublicOfficialStatus() {
             type="radio"
             name="publicOfficialStatus"
             value="International Organisation Leaders"
-            checked={formData.publicOfficialStatus === 'International Organisation Leaders'}
+            checked={localFormData.publicOfficialStatus === 'International Organisation Leaders'}
             onChange={(e) => handleInputChange('publicOfficialStatus', e.target.value)}
             className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
           />
@@ -74,7 +80,7 @@ function PublicOfficialStatus() {
             type="radio"
             name="publicOfficialStatus"
             value="None of the above"
-            checked={formData.publicOfficialStatus === 'None of the above' || !formData.publicOfficialStatus}
+            checked={localFormData.publicOfficialStatus === 'None of the above' || !localFormData.publicOfficialStatus}
             onChange={(e) => handleInputChange('publicOfficialStatus', e.target.value)}
             className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
           />
