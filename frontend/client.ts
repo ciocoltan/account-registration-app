@@ -87,7 +87,6 @@ import { autoLogin as api_auth_auto_login_autoLogin } from "~backend/auth/auto-l
 import { clearLoginCookie as api_auth_clear_login_cookie_clearLoginCookie } from "~backend/auth/clear-login-cookie";
 import { getCountries as api_auth_countries_getCountries } from "~backend/auth/countries";
 import { forgotPassword as api_auth_forgot_password_forgotPassword } from "~backend/auth/forgot-password";
-import { getCountryByIp as api_auth_ip_country_getCountryByIp } from "~backend/auth/ip-country";
 import { login as api_auth_login_login } from "~backend/auth/login";
 import { logout as api_auth_logout_logout } from "~backend/auth/logout";
 import { register as api_auth_register_register } from "~backend/auth/register";
@@ -105,7 +104,6 @@ export namespace auth {
             this.clearLoginCookie = this.clearLoginCookie.bind(this)
             this.forgotPassword = this.forgotPassword.bind(this)
             this.getCountries = this.getCountries.bind(this)
-            this.getCountryByIp = this.getCountryByIp.bind(this)
             this.login = this.login.bind(this)
             this.logout = this.logout.bind(this)
             this.register = this.register.bind(this)
@@ -155,22 +153,6 @@ export namespace auth {
             // Now make the actual call to the API
             const resp = await this.baseClient.callTypedAPI(`/api/countries`, {method: "GET", body: undefined})
             return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_auth_countries_getCountries>
-        }
-
-        /**
-         * Gets country information based on client IP address.
-         */
-        public async getCountryByIp(params: RequestType<typeof api_auth_ip_country_getCountryByIp>): Promise<ResponseType<typeof api_auth_ip_country_getCountryByIp>> {
-            // Convert our params into the objects we need for the request
-            const headers = makeRecord<string, string>({
-                "x-forwarded-for": params.forwardedFor,
-                "x-real-ip":       params.realIp,
-                "x-remote-addr":   params.remoteAddr,
-            })
-
-            // Now make the actual call to the API
-            const resp = await this.baseClient.callTypedAPI(`/api/ip-country`, {headers, method: "GET", body: undefined})
-            return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_auth_ip_country_getCountryByIp>
         }
 
         /**

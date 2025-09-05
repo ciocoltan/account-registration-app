@@ -115,7 +115,7 @@ export function FormDataProvider({ children }: FormDataProviderProps) {
       try {
         const dataToSave = {
           ...formData,
-          lastUpdated: new Date().toISOString()
+          lastUpdated: new Date().toISOString().split('T')[0]
         };
         localStorage.setItem(storageKey, JSON.stringify(dataToSave));
         console.log('Form data saved to localStorage:', dataToSave);
@@ -136,7 +136,7 @@ export function FormDataProvider({ children }: FormDataProviderProps) {
           try {
             const dataToSave = {
               ...newData,
-              lastUpdated: new Date().toISOString()
+              lastUpdated: new Date().toISOString().split('T')[0]
             };
             localStorage.setItem(storageKey, JSON.stringify(dataToSave));
             console.log('Form data auto-saved to localStorage:', dataToSave);
