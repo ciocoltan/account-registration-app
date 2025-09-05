@@ -29,7 +29,7 @@ const defaultCountries: Country[] = [
   { country_id: 20, name: 'Turkey', iso_alpha2_code: 'TR', iso_alpha3_code: 'TUR', tel_country_code: '90', show_on_register: 1, currency: 'TRY', currency_id: 17, brand_id: 1, zone: 'Asia' }
 ];
 
-const defaultPhoneCodes = ['1', '20', '27', '33', '34', '39', '44', '49', '52', '54', '55', '61', '81', '82', '86', '90', '91', '234', '972'];
+const defaultPhoneCodes = ['93', '20', '27', '33', '34', '39', '44', '49', '52', '54', '55', '61', '81', '82', '86', '90', '91', '234', '972'];
 
 function PersonalDetails() {
   const navigate = useNavigate();
