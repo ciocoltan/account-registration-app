@@ -1,4 +1,4 @@
-import { api, APIError } from "encore.dev/api";
+import { api, APIError, Cookie } from "encore.dev/api";
 import { secret } from "encore.dev/config";
 
 const syntelliCoreUrl = secret("SyntelliCoreUrl");
@@ -14,28 +14,27 @@ export interface LoginResponse {
   message: string;
   user?: string;
   access_token?: string;
+  loginCookie: Cookie<"login_token">; // ⬅️ new field
 }
 
-// Authenticates a user and returns a JWT token.
+// Authenticates a user, sets secure cookie, and returns JWT
 export const login = api<LoginRequest, LoginResponse>(
   { expose: true, method: "POST", path: "/api/login" },
   async (req) => {
-    // Validate input
     if (!req.email || !req.password) {
       throw APIError.invalidArgument("Email and password are required");
     }
 
     try {
       const formData = new URLSearchParams();
-      formData.append('email', req.email);
-      formData.append('password', req.password);
+      formData.append("email", req.email);
+      formData.append("password", req.password);
 
       const requestUrl = `${syntelliCoreUrl()}/gateway/api/1/syntellicore.cfc?method=user_login`;
       const requestHeaders = {
         "api_key": syntelliCoreApiKey(),
       };
 
-      // Log the API request details
       console.log("=== SYNTELLICORE LOGIN API REQUEST ===");
       console.log("URL:", requestUrl);
       console.log("Body (FormData):", Object.fromEntries(formData.entries()));
@@ -46,14 +45,10 @@ export const login = api<LoginRequest, LoginResponse>(
         body: formData,
       });
 
-      // Log the response details
-      console.log("=== SYNTELLICORE LOGIN API RESPONSE ===");
-
       const responseText = await response.text();
       console.log("Raw Response Body:", responseText);
 
       if (!response.ok) {
-        console.log("Request failed with status:", response.status);
         if (response.status === 401 || response.status === 403) {
           throw APIError.unauthenticated("Invalid email or password");
         }
@@ -63,43 +58,46 @@ export const login = api<LoginRequest, LoginResponse>(
       let data;
       try {
         data = JSON.parse(responseText);
-      } catch (parseError) {
-        console.log("Failed to parse response as JSON:", parseError);
+      } catch {
         throw APIError.internal("Invalid response format from login service");
       }
-      
-      // Check if the response indicates success and extract authentication data
-      if (!data.success || !data.data || !Array.isArray(data.data) || data.data.length === 0) {
-        console.log("API returned error or invalid response structure");
+
+      if (!data.success || !Array.isArray(data.data) || data.data.length === 0) {
         throw APIError.unauthenticated("Invalid email or password");
       }
 
       const userData = data.data[0];
       if (!userData.authentication_token) {
-        console.log("API returned success but missing authentication_token");
         throw APIError.unauthenticated("Invalid email or password");
       }
-      
+
+      // 🔒 Create secure cookie with JWT (not raw password)
+      const loginCookie: Cookie<"login_token"> = {
+        value: userData.authentication_token,
+        expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+        httpOnly: true,
+        secure: true,
+        sameSite: "Strict",
+        path: "/",
+      };
+
       const successResponse = {
         jwt: userData.authentication_token,
         message: "Login successful",
         user: userData.user,
-        access_token: userData.authentication_token
+        access_token: userData.authentication_token,
+        loginCookie,
       };
 
       console.log("=== END SYNTELLICORE LOGIN API ===");
-
       return successResponse;
+
     } catch (error: any) {
       console.log("=== SYNTELLICORE LOGIN API ERROR ===");
-			if (error instanceof APIError) {
-    console.log(`Error: APIError: ${error.message}`);
-    throw error; // re-throw to keep the correct response
-  } else {
-    console.log(`Error: ${error.message || error}`);
-    throw APIError.internal("Registration service unavailable");
-  }
-     
+      if (error instanceof APIError) {
+        throw error;
+      }
+      throw APIError.internal("Login service unavailable");
     }
   }
 );
