@@ -39,8 +39,7 @@ function AppRoutes() {
       <Routes>
         {isAuthenticated ? (
           <>
-            <Route path="/en/apply" element={<MultiStepContainer />}>
-              <Route index element={<Navigate to="personal-details" replace />} />
+            <Route path="/en/apply/*" element={<MultiStepContainer />}>
               <Route path="personal-details" element={<PersonalDetails />} />
               <Route path="residence-address" element={<ResidenceAddress />} />
               <Route path="public-official-status" element={<PublicOfficialStatus />} />
@@ -55,7 +54,7 @@ function AppRoutes() {
               <Route path="trading-objective" element={<TradingObjective />} />
               <Route path="verification" element={<VerificationStep />} />
             </Route>
-            <Route path="*" element={<Navigate to="/en/apply" />} />
+            <Route path="*" element={<Navigate to="/en/apply/personal-details" replace />} />
           </>
         ) : (
           <>

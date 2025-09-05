@@ -36,7 +36,21 @@ function MultiStepContainer() {
   const [highestMainStepReached, setHighestMainStepReached] = useState(1);
   const [hasCheckedSavedData, setHasCheckedSavedData] = useState(false);
 
-  const currentPath = location.pathname.split('/').pop() || stepFlow[0];
+  // Extract the actual step from the current path
+  const getCurrentStepFromPath = () => {
+    const pathParts = location.pathname.split('/');
+    const lastPart = pathParts[pathParts.length - 1];
+    
+    // Check if this is a valid step
+    if (stepFlow.includes(lastPart)) {
+      return lastPart;
+    }
+    
+    // Default to first step if path is invalid
+    return stepFlow[0];
+  };
+
+  const currentPath = getCurrentStepFromPath();
   const currentStepInfo = stepDetails[currentPath] || stepDetails[stepFlow[0]];
 
   // Check for saved form data and redirect to appropriate step
@@ -44,40 +58,79 @@ function MultiStepContainer() {
     if (!isLoading && !hasCheckedSavedData) {
       setHasCheckedSavedData(true);
       
-      if (formData.currentStep && formData.currentStep !== currentPath) {
+      console.log('Checking saved form data...', formData);
+      
+      // If we have a saved currentStep that's different from current path, redirect
+      if (formData.currentStep && 
+          formData.currentStep !== currentPath && 
+          stepFlow.includes(formData.currentStep)) {
         console.log('Redirecting to saved step:', formData.currentStep);
         navigate(`/en/apply/${formData.currentStep}`, { replace: true });
         return;
       }
       
-      // If no saved step but has data, figure out the furthest step with data
-      if (!formData.currentStep && Object.keys(formData).length > 1) {
+      // If no saved step but has significant form data, find the furthest completed step
+      if (!formData.currentStep && Object.keys(formData).length > 2) { // More than just currentStep and lastUpdated
         let furthestStep = 'personal-details';
         
-        if (formData['first-name'] && formData['last-name']) furthestStep = 'residence-address';
-        if (formData.residenceCountry) furthestStep = 'public-official-status';
-        if (formData.publicOfficialStatus) furthestStep = 'employment-status';
-        if (formData.employmentStatus) furthestStep = 'industry';
-        if (formData.industry) furthestStep = 'annual-income';
-        if (formData.annualIncome) furthestStep = 'available-to-invest';
-        if (formData.availableToInvest) furthestStep = 'plan-to-invest';
-        if (formData.planToInvest) furthestStep = 'investment-source';
-        if (formData.investmentSource) furthestStep = 'professional-experience';
-        if (formData.professionalExperience) furthestStep = 'risk-tolerance';
-        if (formData.riskTolerance) furthestStep = 'trading-objective';
-        if (formData.tradingObjective) furthestStep = 'verification';
+        // Check which steps have been completed based on data
+        if (formData['first-name'] && formData['last-name'] && formData.phone) {
+          furthestStep = 'residence-address';
+        }
+        if (formData.residenceCountry && formData.notUsCitizen && formData.agreedToTerms) {
+          furthestStep = 'public-official-status';
+        }
+        if (formData.publicOfficialStatus) {
+          furthestStep = 'employment-status';
+        }
+        if (formData.employmentStatus) {
+          furthestStep = 'industry';
+        }
+        if (formData.industry) {
+          furthestStep = 'annual-income';
+        }
+        if (formData.annualIncome) {
+          furthestStep = 'available-to-invest';
+        }
+        if (formData.availableToInvest) {
+          furthestStep = 'plan-to-invest';
+        }
+        if (formData.planToInvest) {
+          furthestStep = 'investment-source';
+        }
+        if (formData.investmentSource) {
+          furthestStep = 'professional-experience';
+        }
+        if (formData.professionalExperience) {
+          furthestStep = 'risk-tolerance';
+        }
+        if (formData.riskTolerance) {
+          furthestStep = 'trading-objective';
+        }
+        if (formData.tradingObjective) {
+          furthestStep = 'verification';
+        }
         
         if (furthestStep !== currentPath) {
           console.log('Redirecting to furthest completed step:', furthestStep);
           navigate(`/en/apply/${furthestStep}`, { replace: true });
+          return;
         }
       }
+      
+      // If we're on the base /en/apply path, redirect to personal-details
+      if (location.pathname === '/en/apply' || location.pathname === '/en/apply/') {
+        console.log('Redirecting from base path to personal-details');
+        navigate('/en/apply/personal-details', { replace: true });
+        return;
+      }
     }
-  }, [isLoading, hasCheckedSavedData, formData, currentPath, navigate]);
+  }, [isLoading, hasCheckedSavedData, formData, currentPath, navigate, location.pathname]);
 
-  // Update current step in form data when path changes
+  // Update current step in form data when path changes (only after initial check)
   useEffect(() => {
-    if (hasCheckedSavedData && currentPath) {
+    if (hasCheckedSavedData && currentPath && stepFlow.includes(currentPath)) {
+      console.log('Updating current step to:', currentPath);
       updateFormData({ currentStep: currentPath });
     }
   }, [currentPath, hasCheckedSavedData, updateFormData]);
@@ -94,6 +147,20 @@ function MultiStepContainer() {
       }
     }
   };
+
+  // Show loading state while checking saved data
+  if (!hasCheckedSavedData || isLoading) {
+    return (
+      <div className="bg-white p-12 rounded-xl w-full max-w-3xl border border-gray-200 relative">
+        <div className="flex justify-center items-center min-h-[400px]">
+          <div className="text-center">
+            <div className="spinner mb-4"></div>
+            <p className="text-gray-600">Loading your application...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white p-12 rounded-xl w-full max-w-3xl border border-gray-200 relative">

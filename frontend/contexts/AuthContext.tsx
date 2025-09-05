@@ -32,6 +32,35 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+// Helper function to create user progress entry
+function createUserProgress(email: string) {
+  try {
+    const progressKey = `user_progress_${email}`;
+    const existingProgress = localStorage.getItem(progressKey);
+    
+    if (!existingProgress) {
+      const initialProgress = {
+        email,
+        createdAt: new Date().toISOString(),
+        lastLoginAt: new Date().toISOString(),
+        currentStep: 'personal-details',
+        completedSteps: []
+      };
+      
+      localStorage.setItem(progressKey, JSON.stringify(initialProgress));
+      console.log('User progress entry created:', initialProgress);
+    } else {
+      // Update last login time
+      const progress = JSON.parse(existingProgress);
+      progress.lastLoginAt = new Date().toISOString();
+      localStorage.setItem(progressKey, JSON.stringify(progress));
+      console.log('User progress updated with last login time');
+    }
+  } catch (error) {
+    console.error('Failed to create/update user progress:', error);
+  }
+}
+
 export function AuthProvider({ children }: AuthProviderProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authData, setAuthData] = useState<AuthData | null>(null);
@@ -79,6 +108,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
           setAuthData(newAuthData);
           setIsAuthenticated(true);
           console.log('Auto-login successful');
+          
+          // Create/update user progress
+          createUserProgress(response.user);
         }
       } catch (error: any) {
         console.log('Auto-login failed or no saved credentials:', error.message);
@@ -117,7 +149,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setIsAuthenticated(true);
 
         // Create user progress entry
-        createUserProgress(email);
+        createUserProgress(response.user);
 
         // If remember me is checked, set the login cookie
         if (rememberMe) {
@@ -176,7 +208,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setIsAuthenticated(true);
 
         // Create user progress entry
-        createUserProgress(email);
+        createUserProgress(registerResponse.user);
 
         // Set login cookie for auto-login on future visits
         try {
