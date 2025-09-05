@@ -1,4 +1,4 @@
-import { api, APIError } from "encore.dev/api";
+import { api, APIError, Cookie } from "encore.dev/api";
 import { secret } from "encore.dev/config";
 
 const syntelliCoreUrl = secret("SyntelliCoreUrl");
@@ -12,9 +12,10 @@ export interface LogoutRequest {
 export interface LogoutResponse {
   message: string;
   success: boolean;
+  loginCookie: Cookie<"login_creds">; // Return expired cookie to clear it
 }
 
-// Logs out a user by killing their access token.
+// Logs out a user by killing their access token and clearing login cookie
 export const logout = api<LogoutRequest, LogoutResponse>(
   { expose: true, method: "POST", path: "/api/logout" },
   async (req) => {
@@ -25,15 +26,14 @@ export const logout = api<LogoutRequest, LogoutResponse>(
 
     try {
       const formData = new URLSearchParams();
-      formData.append('user', req.user);
-      formData.append('access_token', req.access_token);
+      formData.append("user", req.user);
+      formData.append("access_token", req.access_token);
 
       const requestUrl = `${syntelliCoreUrl()}/gateway/api/6/syntellicore.cfc?method=user_logout`;
       const requestHeaders = {
         "api_key": syntelliCoreApiKey(),
       };
 
-      // Log the API request details
       console.log("=== SYNTELLICORE LOGOUT API REQUEST ===");
       console.log("URL:", requestUrl);
 
@@ -43,7 +43,6 @@ export const logout = api<LogoutRequest, LogoutResponse>(
         body: formData,
       });
 
-      // Log the response details
       console.log("=== SYNTELLICORE LOGOUT API RESPONSE ===");
 
       const responseText = await response.text();
@@ -54,18 +53,28 @@ export const logout = api<LogoutRequest, LogoutResponse>(
         throw APIError.internal("Logout failed");
       }
 
-      let data;
+      let data: any;
       try {
         data = JSON.parse(responseText);
       } catch (parseError) {
         console.log("Failed to parse response as JSON:", parseError);
-        // For logout, we can still return success even if parsing fails
         data = {};
       }
-      
-      const successResponse = {
+
+      // Create expired cookie to remove it from client
+      const expiredCookie: Cookie<"login_creds"> = {
+        value: "",
+        expires: new Date(0), // Expire immediately
+        httpOnly: true,
+        secure: true,
+        sameSite: "Lax",
+        path: "/",
+      };
+
+      const successResponse: LogoutResponse = {
         message: data.message || "Logout successful",
-        success: true
+        success: true,
+        loginCookie: expiredCookie,
       };
 
       console.log("=== END SYNTELLICORE LOGOUT API ===");
@@ -75,11 +84,10 @@ export const logout = api<LogoutRequest, LogoutResponse>(
       console.log("=== SYNTELLICORE LOGOUT API ERROR ===");
       console.log("Error:", error);
       console.log("Error stack:", error.stack);
-      
+
       if (error.code) {
         throw error; // Re-throw APIError
       }
-      console.error("Logout API error:", error);
       throw APIError.internal("Logout service unavailable");
     }
   }
