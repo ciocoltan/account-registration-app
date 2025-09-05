@@ -121,9 +121,7 @@ function LoginForm() {
           />
         </div>
 
-        <div className="flex items-center justify-between">
-
-          
+        <div className="flex items-center justify-between">          
           <button
             type="button"
             onClick={() => navigate('/forgot-password')}
