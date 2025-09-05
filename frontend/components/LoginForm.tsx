@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 interface FormErrors {
   email?: string;
+  password?: string;
   general?: string;
 }
 
@@ -32,12 +33,31 @@ function LoginForm() {
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     if (field === 'email') clearError('email');
+    if (field === 'password') clearError('password');
     clearError('general');
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = {};
+    if (!formData.email) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email address';
+    }
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!validateForm()) {
+      return;
+    }
+
     setIsSubmitting(true);
     setErrors({});
 
@@ -53,7 +73,7 @@ function LoginForm() {
   };
 
   return (
-    <div className="max-w-md mx-auto bg-white p-12 rounded-xl shadow-lg relative z-10">
+    <div className="w-full max-w-lg mx-auto bg-white p-12 rounded-xl shadow-lg relative z-10">
       <div className="text-center">
         <h2 className="text-3xl font-bold text-gray-900">Login</h2>
         <p className="text-gray-500 mt-2">
@@ -97,6 +117,7 @@ function LoginForm() {
             id="login-password"
             value={formData.password}
             onChange={(value) => handleInputChange('password', value)}
+            error={errors.password}
           />
         </div>
 
