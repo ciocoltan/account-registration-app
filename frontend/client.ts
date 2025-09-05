@@ -34,8 +34,6 @@ const BROWSER = typeof globalThis === "object" && ("window" in globalThis);
  */
 export class Client {
     public readonly auth: auth.ServiceClient
-    public readonly kyc: kyc.ServiceClient
-    public readonly onboarding: onboarding.ServiceClient
     private readonly options: ClientOptions
     private readonly target: string
 
@@ -51,8 +49,6 @@ export class Client {
         this.options = options ?? {}
         const base = new BaseClient(this.target, this.options)
         this.auth = new auth.ServiceClient(base)
-        this.kyc = new kyc.ServiceClient(base)
-        this.onboarding = new onboarding.ServiceClient(base)
     }
 
     /**
@@ -211,91 +207,6 @@ export namespace auth {
             // Now make the actual call to the API
             const resp = await this.baseClient.callTypedAPI(`/api/set-login-cookie`, {method: "POST", body: JSON.stringify(params)})
             return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_auth_set_login_cookie_setLoginCookie>
-        }
-    }
-}
-
-/**
- * Import the endpoint handlers to derive the types for the client.
- */
-import { initiate as api_kyc_initiate_initiate } from "~backend/kyc/initiate";
-
-export namespace kyc {
-
-    export class ServiceClient {
-        private baseClient: BaseClient
-
-        constructor(baseClient: BaseClient) {
-            this.baseClient = baseClient
-            this.initiate = this.initiate.bind(this)
-        }
-
-        /**
-         * Initiates the KYC verification process.
-         */
-        public async initiate(): Promise<ResponseType<typeof api_kyc_initiate_initiate>> {
-            // Now make the actual call to the API
-            const resp = await this.baseClient.callTypedAPI(`/api/kyc/initiate`, {method: "POST", body: undefined})
-            return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_kyc_initiate_initiate>
-        }
-    }
-}
-
-/**
- * Import the endpoint handlers to derive the types for the client.
- */
-import { setUserData as api_onboarding_setUserData_setUserData } from "~backend/onboarding/setUserData";
-import { getStatus as api_onboarding_status_getStatus } from "~backend/onboarding/status";
-import { saveStep2 as api_onboarding_step2_saveStep2 } from "~backend/onboarding/step2";
-import { saveStep3 as api_onboarding_step3_saveStep3 } from "~backend/onboarding/step3";
-
-export namespace onboarding {
-
-    export class ServiceClient {
-        private baseClient: BaseClient
-
-        constructor(baseClient: BaseClient) {
-            this.baseClient = baseClient
-            this.getStatus = this.getStatus.bind(this)
-            this.saveStep2 = this.saveStep2.bind(this)
-            this.saveStep3 = this.saveStep3.bind(this)
-            this.setUserData = this.setUserData.bind(this)
-        }
-
-        /**
-         * Retrieves the current onboarding step for the user.
-         */
-        public async getStatus(): Promise<ResponseType<typeof api_onboarding_status_getStatus>> {
-            // Now make the actual call to the API
-            const resp = await this.baseClient.callTypedAPI(`/api/onboarding/status`, {method: "GET", body: undefined})
-            return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_onboarding_status_getStatus>
-        }
-
-        /**
-         * Saves step 2 onboarding data.
-         */
-        public async saveStep2(params: RequestType<typeof api_onboarding_step2_saveStep2>): Promise<ResponseType<typeof api_onboarding_step2_saveStep2>> {
-            // Now make the actual call to the API
-            const resp = await this.baseClient.callTypedAPI(`/api/onboarding/step2`, {method: "POST", body: JSON.stringify(params)})
-            return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_onboarding_step2_saveStep2>
-        }
-
-        /**
-         * Saves step 3 onboarding data.
-         */
-        public async saveStep3(params: RequestType<typeof api_onboarding_step3_saveStep3>): Promise<ResponseType<typeof api_onboarding_step3_saveStep3>> {
-            // Now make the actual call to the API
-            const resp = await this.baseClient.callTypedAPI(`/api/onboarding/step3`, {method: "POST", body: JSON.stringify(params)})
-            return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_onboarding_step3_saveStep3>
-        }
-
-        /**
-         * Sets user data in Syntellicore.
-         */
-        public async setUserData(params: RequestType<typeof api_onboarding_setUserData_setUserData>): Promise<ResponseType<typeof api_onboarding_setUserData_setUserData>> {
-            // Now make the actual call to the API
-            const resp = await this.baseClient.callTypedAPI(`/api/onboarding/set-user-data`, {method: "POST", body: JSON.stringify(params)})
-            return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_onboarding_setUserData_setUserData>
         }
     }
 }

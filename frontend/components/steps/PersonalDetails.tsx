@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useBackend } from '../../hooks/useBackend';
 import { useAuth } from '../../contexts/AuthContext';
 import { useFormData } from '../../contexts/FormDataContext';
 import type { Country } from '~backend/auth/countries';
 import Spinner from '../Spinner';
+import backend from '~backend/client';
 
 const defaultCountries: Country[] = [
   { country_id: 1, name: 'Afghanistan', iso_alpha2_code: 'AF', iso_alpha3_code: 'AFG', tel_country_code: '93', show_on_register: 1, currency: 'USD', currency_id: 1, brand_id: 1, zone: 'Asia' },
@@ -33,7 +33,6 @@ const defaultPhoneCodes = ['93', '20', '27', '33', '34', '39', '44', '49', '52',
 
 function PersonalDetails() {
   const navigate = useNavigate();
-  const backend = useBackend();
   const { authData, isAuthenticated } = useAuth();
   const { formData, updateFormData } = useFormData();
   
@@ -168,7 +167,7 @@ function PersonalDetails() {
     if (isAuthenticated) {
       initializeData();
     }
-  }, [isAuthenticated, backend]);
+  }, [isAuthenticated]);
 
   const handleInputChange = (name: string, value: string) => {
     setLocalFormData(prev => ({ ...prev, [name]: value }));
@@ -209,29 +208,9 @@ function PersonalDetails() {
 
   const handleNext = async () => {
     if (!validateStep()) return;
-    if (!authData?.user || !authData?.accessToken) {
-      setErrors(prev => ({ ...prev, general: "Authentication required" }));
-      return;
-    }
 
     setIsSubmitting(true);
     try {
-      const day = String(localFormData['dob-day']).padStart(2, '0');
-      const month = String(localFormData['dob-month']).padStart(2, '0');
-      const birth_dt = `${localFormData['dob-year']}/${day}/${month}`;
-
-      // Update CRM with user data
-      await backend.onboarding.setUserData({
-        user: authData.user,
-        access_token: authData.accessToken,
-        fname: localFormData['first-name'],
-        lname: localFormData['last-name'],
-        tel1: localFormData.phone,
-        tel1_country_code: localFormData['phone-code'],
-        cou_id: localFormData.nationality,
-        birth_dt,
-      });
-
       // Save all form data to localStorage before navigating
       updateFormData(localFormData);
       
@@ -324,7 +303,7 @@ function PersonalDetails() {
               onChange={(e) => handleInputChange('dob-day', e.target.value)} 
               onKeyDown={(e) => handleKeyDown(e, 'dob-month')}
               className="form-input custom-bg-input block w-full border rounded-lg py-2 px-3 focus:outline-none sm:text-sm" 
-              style={{ backgroundColor: 'rgb(248, 249, 250)' }}
+              style={{ backgroundColor: 'rgb(248, 249, 750)' }}
               disabled={isSubmitting}
             >
               <option value="">Day</option>
@@ -337,7 +316,7 @@ function PersonalDetails() {
               onChange={(e) => handleInputChange('dob-month', e.target.value)} 
               onKeyDown={(e) => handleKeyDown(e, 'dob-year')}
               className="form-input custom-bg-input block w-full border rounded-lg py-2 px-3 focus:outline-none sm:text-sm" 
-              style={{ backgroundColor: 'rgb(248, 249, 250)' }}
+              style={{ backgroundColor: 'rgb(248, 249, 750)' }}
               disabled={isSubmitting}
             >
               <option value="">Month</option>
@@ -350,7 +329,7 @@ function PersonalDetails() {
               onChange={(e) => handleInputChange('dob-year', e.target.value)} 
               onKeyDown={(e) => handleKeyDown(e, 'nationality')}
               className="form-input custom-bg-input block w-full border rounded-lg py-2 px-3 focus:outline-none sm:text-sm" 
-              style={{ backgroundColor: 'rgb(248, 249, 250)' }}
+              style={{ backgroundColor: 'rgb(248, 249, 750)' }}
               disabled={isSubmitting}
             >
               <option value="">Year</option>
@@ -369,7 +348,7 @@ function PersonalDetails() {
             onChange={(e) => handleInputChange('nationality', e.target.value)} 
             onKeyDown={(e) => handleKeyDown(e, 'phone-code')}
             className="form-input custom-bg-input mt-1 block w-full border rounded-lg py-2 px-3 focus:outline-none sm:text-sm" 
-            style={{ backgroundColor: 'rgb(248, 249, 250)' }}
+            style={{ backgroundColor: 'rgb(248, 249, 750)' }}
             disabled={isSubmitting}
           >
             <option value="">Select Nationality</option>

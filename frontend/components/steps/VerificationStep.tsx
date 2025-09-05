@@ -1,16 +1,13 @@
 import React from 'react';
 import { Clipboard } from 'lucide-react';
-import { useBackend } from '../../hooks/useBackend';
 import { useFormData } from '../../contexts/FormDataContext';
 
 function VerificationStep() {
-  const backend = useBackend();
   const { clearFormData } = useFormData();
 
   const handleInitiateKyc = async () => {
     try {
-      const response = await backend.kyc.initiate();
-      console.log('KYC initiated:', response);
+      console.log('KYC initiated (mock)');
       
       // Clear form data upon successful completion
       clearFormData();

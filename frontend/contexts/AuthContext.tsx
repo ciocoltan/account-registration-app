@@ -45,7 +45,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       
       // Clear form data and countries cache
       keys.forEach(key => {
-        if (key.startsWith('form_data_') || key === 'countries_cache' || key === 'registration_country') {
+        if (key.startsWith('form_data_') || key === 'countries_cache' || key === 'registration_country' || key.startsWith('user_progress_')) {
           localStorage.removeItem(key);
         }
       });
@@ -53,6 +53,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.log('All user data cleared from localStorage');
     } catch (error) {
       console.error('Failed to clear user data from localStorage:', error);
+    }
+  };
+
+  // Create user progress entry in localStorage
+  const createUserProgress = (userEmail: string) => {
+    try {
+      const userProgressKey = `user_progress_${userEmail}`;
+      const progressData = {
+        email: userEmail,
+        currentStep: 'personal-details',
+        dateCreated: new Date().toISOString()
+      };
+      
+      localStorage.setItem(userProgressKey, JSON.stringify(progressData));
+      console.log('User progress created:', progressData);
+    } catch (error) {
+      console.error('Failed to create user progress:', error);
     }
   };
 
@@ -116,6 +133,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setAuthData(newAuthData);
         setIsAuthenticated(true);
 
+        // Create user progress entry
+        createUserProgress(email);
+
         // If remember me is checked, set the login cookie
         if (rememberMe) {
           try {
@@ -171,6 +191,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         
         setAuthData(newAuthData);
         setIsAuthenticated(true);
+
+        // Create user progress entry
+        createUserProgress(email);
 
         // Set login cookie for auto-login on future visits
         try {

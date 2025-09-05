@@ -95,20 +95,6 @@ function MultiStepContainer() {
     }
   };
 
-  // Show loading while checking saved data
-  if (isLoading || !hasCheckedSavedData) {
-    return (
-      <div className="bg-white p-12 rounded-xl w-full max-w-3xl border border-gray-200 relative">
-        <div className="flex justify-center items-center h-64">
-          <div className="text-center">
-            <div className="spinner mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading your progress...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="bg-white p-12 rounded-xl w-full max-w-3xl border border-gray-200 relative">
       <LogoutButton />
