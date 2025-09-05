@@ -56,23 +56,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  // Create user progress entry in localStorage
-  const createUserProgress = (userEmail: string) => {
-    try {
-      const userProgressKey = `user_progress_${userEmail}`;
-      const progressData = {
-        email: userEmail,
-        currentStep: 'personal-details',
-        dateCreated: new Date().toISOString()
-      };
-      
-      localStorage.setItem(userProgressKey, JSON.stringify(progressData));
-      console.log('User progress created:', progressData);
-    } catch (error) {
-      console.error('Failed to create user progress:', error);
-    }
-  };
-
   useEffect(() => {
     // Attempt auto-login on app load
     const attemptAutoLogin = async () => {
