@@ -14,7 +14,7 @@ export interface LoginResponse {
   message: string;
   user?: string;
   access_token?: string;
-  loginCookie: Cookie<"login_token">; // ⬅️ new field
+  loginCookie: Cookie<"login_token">;
 }
 
 // Authenticates a user, sets secure cookie, and returns JWT
