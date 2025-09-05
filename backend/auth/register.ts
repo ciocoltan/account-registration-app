@@ -125,109 +125,81 @@ async function performLogin(email: string, password: string): Promise<{ jwt: str
   };
 }
 
-// Registers a new user account.
 export const register = api<RegisterRequest, RegisterResponse>(
   { expose: true, method: "POST", path: "/api/register-user" },
   async (req) => {
-    // Validate input
     if (!req.email || !req.password) {
       throw APIError.invalidArgument("Email and password are required");
     }
 
     try {
       console.log("=== GETTING COUNTRY BY CODE ===");
-      console.log("Country Code:", req.countryCode);
-
-      // Get country ID from Syntellicore API
       const countryId = await getCountryIdByCode(req.countryCode);
-      console.log("Country ID:", countryId);
 
       const formData = new URLSearchParams();
-      formData.append('email', req.email);
-      formData.append('password', req.password);
-      formData.append('country_id', countryId);
-      formData.append('currency', req.currency);
+      formData.append("email", req.email);
+      formData.append("password", req.password);
+      formData.append("country_id", countryId);
+      formData.append("currency", req.currency);
 
       const requestUrl = `${syntelliCoreUrl()}/gateway/api/6/syntellicore.cfc?method=create_user`;
-      const requestHeaders = {
-        "api_key": syntelliCoreApiKey(),
-      };
-
-      // Log the API request details
-      console.log("=== SYNTELLICORE REGISTER API REQUEST ===");
-      console.log("URL:", requestUrl);
-      
       const response = await fetch(requestUrl, {
         method: "POST",
-        headers: requestHeaders,
+        headers: { "api_key": syntelliCoreApiKey() },
         body: formData,
       });
 
-      // Log the response details
-      console.log("=== SYNTELLICORE REGISTER API RESPONSE ===");
-
       const responseText = await response.text();
-      console.log("Raw Response Body:", responseText);
-
       let data;
       try {
         data = JSON.parse(responseText);
-      } catch (parseError) {
-        console.log("Failed to parse response as JSON:", parseError);
+      } catch {
         throw APIError.internal("Invalid response format from registration service");
       }
-      
-      // Check if the API returned success: false
-      if (data.success === false) {
-        console.log("API returned success: false");
-        const errorMessage = data.info?.message || "Registration failed";
-        
-        // Handle specific error cases
-        if (errorMessage.toLowerCase().includes('email exists')) {
-          throw APIError.alreadyExists("User with this email already exists");
-        }
-        if (errorMessage.toLowerCase().includes('invalid password length')) {
-          throw APIError.invalidArgument("Password must be at least 8 characters long");
-        }
-        
-        // Generic error for other cases
-        throw APIError.invalidArgument(errorMessage);
-      }
 
-      // Check if the response indicates an error (legacy check)
-      if (data.error) {
-        console.log("API returned error:", data.error);
-        if (data.error.toLowerCase().includes('email') && data.error.toLowerCase().includes('exists')) {
+      if (data.success === false || data.error) {
+        const errorMessage = data.info?.message || data.error || "Registration failed";
+        if (errorMessage.toLowerCase().includes("email exists")) {
           throw APIError.alreadyExists("User with this email already exists");
         }
-        throw APIError.invalidArgument(data.error);
+        if (errorMessage.toLowerCase().includes("password")) {
+          throw APIError.invalidArgument("Password must meet requirements");
+        }
+        throw APIError.invalidArgument(errorMessage);
       }
 
       // If registration was successful, perform auto-login
       console.log("Registration successful, performing auto-login...");
       const loginData = await performLogin(req.email, req.password);
-      
+
+      // 🔒 Create secure cookie with JWT (not password!)
+      const loginCookie: Cookie<"login_token"> = {
+        value: loginData.jwt,
+        expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+        httpOnly: true,
+        secure: true,
+        sameSite: "Strict",
+        path: "/",
+      };
+
       const successResponse = {
         jwt: loginData.jwt,
         message: "User registered and logged in successfully",
         user: loginData.user,
         access_token: loginData.access_token,
-        success: true
+        success: true,
+        loginCookie, // ⬅️ Now included in response
       };
 
       console.log("Final response:", JSON.stringify(successResponse, null, 2));
-      console.log("=== END SYNTELLICORE REGISTER API ===");
-
       return successResponse;
+
     } catch (error: any) {
       console.log("=== SYNTELLICORE REGISTER API ERROR ===");
-			if (error instanceof APIError) {
-    console.log(`Error: APIError: ${error.message}`);
-    throw error; // re-throw to keep the correct response
-  } else {
-    console.log(`Error: ${error.message || error}`);
-    throw APIError.internal("Registration service unavailable");
-  }
+      if (error instanceof APIError) {
+        throw error;
+      }
+      throw APIError.internal("Registration service unavailable");
     }
   }
 );
