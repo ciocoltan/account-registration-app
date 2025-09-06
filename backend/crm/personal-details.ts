@@ -41,10 +41,6 @@ export const setPersonalDetails = api<SetPersonalDetailsRequest, SetPersonalDeta
 
     try {
       console.log("=== SYNTELLICORE SET PERSONAL DETAILS API REQUEST ===");
-      console.log("User:", req.user);
-      console.log("First Name:", req.firstName);
-      console.log("Last Name:", req.lastName);
-      console.log("Nationality:", req.nationalityText);
 
       // Build the questionnaire answers array based on the curl example
       const personalDetailsAnswers: PersonalDetailsSubmission[] = [
@@ -105,7 +101,6 @@ export const setPersonalDetails = api<SetPersonalDetailsRequest, SetPersonalDeta
       };
 
       console.log("URL:", requestUrl);
-      console.log("Headers:", JSON.stringify(requestHeaders, null, 2));
       console.log("Personal Details Answers JSON:", answersJson);
 
       const response = await fetch(requestUrl, {
