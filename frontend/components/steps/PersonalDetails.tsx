@@ -58,7 +58,7 @@ function PersonalDetails() {
   const loadCountries = async () => {
     try {
       // First, try to load from localStorage cache
-      const cachedCountries = localStorage.getItem('countries_cache');
+      const cachedCountries = localStorage.getItem('registration_country');
       if (cachedCountries) {
         const { data, timestamp } = JSON.parse(cachedCountries);
         // Check if cache is less than 24 hours old
@@ -74,7 +74,7 @@ function PersonalDetails() {
           return data;
         } else {
           console.log('Countries cache expired, fetching fresh data');
-          localStorage.removeItem('countries_cache');
+          localStorage.removeItem('registration_country');
         }
       }
 
@@ -87,7 +87,7 @@ function PersonalDetails() {
       
       // Cache the countries data
       try {
-        localStorage.setItem('countries_cache', JSON.stringify({
+        localStorage.setItem('registration_country', JSON.stringify({
           data: fetchedCountries,
           timestamp: Date.now()
         }));

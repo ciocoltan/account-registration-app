@@ -34,6 +34,7 @@ const BROWSER = typeof globalThis === "object" && ("window" in globalThis);
  */
 export class Client {
     public readonly auth: auth.ServiceClient
+    public readonly crm: crm.ServiceClient
     private readonly options: ClientOptions
     private readonly target: string
 
@@ -49,6 +50,7 @@ export class Client {
         this.options = options ?? {}
         const base = new BaseClient(this.target, this.options)
         this.auth = new auth.ServiceClient(base)
+        this.crm = new crm.ServiceClient(base)
     }
 
     /**
@@ -83,7 +85,8 @@ export interface ClientOptions {
  * Import the endpoint handlers to derive the types for the client.
  */
 import { autoLogin as api_auth_auto_login_autoLogin } from "~backend/auth/auto-login";
-import { forgotPassword as api_auth_forgot_password_forgotPassword } from "~backend/auth/forgot-password";
+import { clearLoginCookie as api_auth_clear_login_cookie_clearLoginCookie } from "~backend/auth/clear-login-cookie";
+import { getCountries as api_auth_countries_getCountries } from "~backend/auth/countries";
 import { login as api_auth_login_login } from "~backend/auth/login";
 import { logout as api_auth_logout_logout } from "~backend/auth/logout";
 import { register as api_auth_register_register } from "~backend/auth/register";
@@ -96,12 +99,16 @@ export namespace auth {
         constructor(baseClient: BaseClient) {
             this.baseClient = baseClient
             this.autoLogin = this.autoLogin.bind(this)
-            this.forgotPassword = this.forgotPassword.bind(this)
+            this.clearLoginCookie = this.clearLoginCookie.bind(this)
+            this.getCountries = this.getCountries.bind(this)
             this.login = this.login.bind(this)
             this.logout = this.logout.bind(this)
             this.register = this.register.bind(this)
         }
 
+        /**
+         * Performs automatic login using encrypted credentials from secure cookie
+         */
         public async autoLogin(params: RequestType<typeof api_auth_auto_login_autoLogin>): Promise<ResponseType<typeof api_auth_auto_login_autoLogin>> {
             // Now make the actual call to the API
             const resp = await this.baseClient.callTypedAPI(`/api/auto-login`, {method: "POST", body: undefined})
@@ -109,16 +116,25 @@ export namespace auth {
         }
 
         /**
-         * Initiates password reset process for a user.
+         * Clears the encrypted login credentials cookie from client browser
          */
-        public async forgotPassword(params: RequestType<typeof api_auth_forgot_password_forgotPassword>): Promise<ResponseType<typeof api_auth_forgot_password_forgotPassword>> {
+        public async clearLoginCookie(): Promise<ResponseType<typeof api_auth_clear_login_cookie_clearLoginCookie>> {
             // Now make the actual call to the API
-            const resp = await this.baseClient.callTypedAPI(`/api/forgot-password`, {method: "POST", body: JSON.stringify(params)})
-            return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_auth_forgot_password_forgotPassword>
+            const resp = await this.baseClient.callTypedAPI(`/api/clear-login-cookie`, {method: "POST", body: undefined})
+            return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_auth_clear_login_cookie_clearLoginCookie>
         }
 
         /**
-         * Authenticates a user, sets secure cookie, and returns JWT
+         * Retrieves countries list from Syntellicore CRM for registration and address forms
+         */
+        public async getCountries(params: RequestType<typeof api_auth_countries_getCountries>): Promise<ResponseType<typeof api_auth_countries_getCountries>> {
+            // Now make the actual call to the API
+            const resp = await this.baseClient.callTypedAPI(`/api/countries`, {method: "POST", body: JSON.stringify(params)})
+            return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_auth_countries_getCountries>
+        }
+
+        /**
+         * Authenticates user with Syntellicore CRM and sets secure encrypted cookie for 30 days
          */
         public async login(params: RequestType<typeof api_auth_login_login>): Promise<ResponseType<typeof api_auth_login_login>> {
             // Now make the actual call to the API
@@ -127,7 +143,7 @@ export namespace auth {
         }
 
         /**
-         * Logs out a user by killing their access token and clearing login cookie
+         * Logs out user from Syntellicore CRM and clears secure login cookie
          */
         public async logout(params: RequestType<typeof api_auth_logout_logout>): Promise<ResponseType<typeof api_auth_logout_logout>> {
             // Now make the actual call to the API
@@ -135,10 +151,111 @@ export namespace auth {
             return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_auth_logout_logout>
         }
 
+        /**
+         * Registers new user with Syntellicore CRM and performs auto-login
+         */
         public async register(params: RequestType<typeof api_auth_register_register>): Promise<ResponseType<typeof api_auth_register_register>> {
             // Now make the actual call to the API
-            const resp = await this.baseClient.callTypedAPI(`/api/register-user`, {method: "POST", body: JSON.stringify(params)})
+            const resp = await this.baseClient.callTypedAPI(`/api/register`, {method: "POST", body: JSON.stringify(params)})
             return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_auth_register_register>
+        }
+    }
+}
+
+/**
+ * Import the endpoint handlers to derive the types for the client.
+ */
+import {
+    getQuestionnaireUserAnswers as api_crm_questionnaires_getQuestionnaireUserAnswers,
+    getQuestionnaires as api_crm_questionnaires_getQuestionnaires,
+    setQuestionnaireUserAnswers as api_crm_questionnaires_setQuestionnaireUserAnswers
+} from "~backend/crm/questionnaires";
+import {
+    getUserData as api_crm_user_data_getUserData,
+    setUserData as api_crm_user_data_setUserData
+} from "~backend/crm/user-data";
+import {
+    getOnboardWizardSteps as api_crm_user_progress_getOnboardWizardSteps,
+    setOnboardWizardStepStatus as api_crm_user_progress_setOnboardWizardStepStatus
+} from "~backend/crm/user-progress";
+
+export namespace crm {
+
+    export class ServiceClient {
+        private baseClient: BaseClient
+
+        constructor(baseClient: BaseClient) {
+            this.baseClient = baseClient
+            this.getOnboardWizardSteps = this.getOnboardWizardSteps.bind(this)
+            this.getQuestionnaireUserAnswers = this.getQuestionnaireUserAnswers.bind(this)
+            this.getQuestionnaires = this.getQuestionnaires.bind(this)
+            this.getUserData = this.getUserData.bind(this)
+            this.setOnboardWizardStepStatus = this.setOnboardWizardStepStatus.bind(this)
+            this.setQuestionnaireUserAnswers = this.setQuestionnaireUserAnswers.bind(this)
+            this.setUserData = this.setUserData.bind(this)
+        }
+
+        /**
+         * Retrieves user's onboarding wizard progress from Syntellicore CRM
+         */
+        public async getOnboardWizardSteps(params: RequestType<typeof api_crm_user_progress_getOnboardWizardSteps>): Promise<ResponseType<typeof api_crm_user_progress_getOnboardWizardSteps>> {
+            // Now make the actual call to the API
+            const resp = await this.baseClient.callTypedAPI(`/api/onboard-wizard-steps`, {method: "POST", body: JSON.stringify(params)})
+            return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_crm_user_progress_getOnboardWizardSteps>
+        }
+
+        /**
+         * Retrieves user's saved answers from Syntellicore CRM questionnaire
+         */
+        public async getQuestionnaireUserAnswers(params: RequestType<typeof api_crm_questionnaires_getQuestionnaireUserAnswers>): Promise<ResponseType<typeof api_crm_questionnaires_getQuestionnaireUserAnswers>> {
+            // Now make the actual call to the API
+            const resp = await this.baseClient.callTypedAPI(`/api/questionnaire-user-answers`, {method: "POST", body: JSON.stringify(params)})
+            return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_crm_questionnaires_getQuestionnaireUserAnswers>
+        }
+
+        /**
+         * Retrieves questionnaire structure from Syntellicore CRM for form building
+         */
+        public async getQuestionnaires(params: RequestType<typeof api_crm_questionnaires_getQuestionnaires>): Promise<ResponseType<typeof api_crm_questionnaires_getQuestionnaires>> {
+            // Now make the actual call to the API
+            const resp = await this.baseClient.callTypedAPI(`/api/questionnaires`, {method: "POST", body: JSON.stringify(params)})
+            return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_crm_questionnaires_getQuestionnaires>
+        }
+
+        /**
+         * Retrieves complete user data from Syntellicore CRM
+         */
+        public async getUserData(params: RequestType<typeof api_crm_user_data_getUserData>): Promise<ResponseType<typeof api_crm_user_data_getUserData>> {
+            // Now make the actual call to the API
+            const resp = await this.baseClient.callTypedAPI(`/api/user-data`, {method: "POST", body: JSON.stringify(params)})
+            return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_crm_user_data_getUserData>
+        }
+
+        /**
+         * Updates user's onboarding wizard step status in Syntellicore CRM
+         */
+        public async setOnboardWizardStepStatus(params: RequestType<typeof api_crm_user_progress_setOnboardWizardStepStatus>): Promise<ResponseType<typeof api_crm_user_progress_setOnboardWizardStepStatus>> {
+            // Now make the actual call to the API
+            const resp = await this.baseClient.callTypedAPI(`/api/onboard-wizard-step-status`, {method: "POST", body: JSON.stringify(params)})
+            return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_crm_user_progress_setOnboardWizardStepStatus>
+        }
+
+        /**
+         * Submits user answers to questionnaire in Syntellicore CRM
+         */
+        public async setQuestionnaireUserAnswers(params: RequestType<typeof api_crm_questionnaires_setQuestionnaireUserAnswers>): Promise<ResponseType<typeof api_crm_questionnaires_setQuestionnaireUserAnswers>> {
+            // Now make the actual call to the API
+            const resp = await this.baseClient.callTypedAPI(`/api/questionnaire-answers`, {method: "POST", body: JSON.stringify(params)})
+            return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_crm_questionnaires_setQuestionnaireUserAnswers>
+        }
+
+        /**
+         * Updates user data in Syntellicore CRM
+         */
+        public async setUserData(params: RequestType<typeof api_crm_user_data_setUserData>): Promise<ResponseType<typeof api_crm_user_data_setUserData>> {
+            // Now make the actual call to the API
+            const resp = await this.baseClient.callTypedAPI(`/api/update-user-data`, {method: "POST", body: JSON.stringify(params)})
+            return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_crm_user_data_setUserData>
         }
     }
 }
