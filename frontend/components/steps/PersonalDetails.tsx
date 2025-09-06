@@ -142,8 +142,7 @@ function PersonalDetails() {
         
         // Find the country by ISO code
         const matchingCountry = availableCountries.find(c => 
-          c.iso_alpha2_code === countryCode || 
-          c.iso_alpha3_code === countryCode
+          c.iso_alpha2_code === countryCode
         );
         
         if (matchingCountry) {
