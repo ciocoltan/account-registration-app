@@ -57,7 +57,7 @@ export const setPersonalDetails = api<SetPersonalDetailsRequest, SetPersonalDeta
           eqaa_text: "CeciltanIDnumber"
         },
         {
-          eqaq_id: "63",
+          eqaq_id: "104",
           eqaa_id: parseInt(req.nationality),
           eqaa_text: req.nationalityText
         },
