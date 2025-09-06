@@ -112,7 +112,7 @@ function PersonalDetails() {
   };
 
   // Auto-fill nationality based on registration country
-  const autoFillFromRegistration = (availableCountries: Country[]) => {
+  const autoFillFromRegistration = async (availableCountries: Country[]) => {
     try {
       const registrationData = localStorage.getItem('registration_country');
       if (registrationData && !formData.nationality) {
@@ -127,16 +127,16 @@ function PersonalDetails() {
 //      const countryCode = "CY";
 				// Step 1: Try to detect country code from Cloudflare
       let countryCode = "MD";
-     // try {
-      //  const res = await fetch("https://cloudflare.com/cdn-cgi/trace");
-    //    const text = await res.text();
-    //    const locLine = text.split("\n").find(line => line.startsWith("loc="));
-    //    if (locLine) {
-   //       countryCode = locLine.split("=")[1].trim(); // e.g. "CY"
-   //     }
-  //    } catch (err) {
-  //      console.warn("Cloudflare detection failed:", err);
-  //    }
+      try {
+        const res = await fetch("https://cloudflare.com/cdn-cgi/trace");
+        const text = await res.text();
+        const locLine = text.split("\n").find(line => line.startsWith("loc="));
+        if (locLine) {
+          countryCode = locLine.split("=")[1].trim(); // e.g. "CY"
+        }
+    } catch (err) {
+        console.warn("Cloudflare detection failed:", err);
+      }
 			
         console.log('Auto-filling nationality from registration country:', countryCode);
         
