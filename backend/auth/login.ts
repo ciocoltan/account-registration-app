@@ -2,9 +2,9 @@ import { api, APIError, Cookie } from "encore.dev/api";
 import { secret } from "encore.dev/config";
 import crypto from "crypto";
 
-// Configuration for Vault Markets CRM
-const vaultMarketsUrl = secret("VaultMarketsUrl");
-const vaultMarketsApiKey = secret("VaultMarketsApiKey");
+// Configuration for Syntellicore CRM
+const syntelliCoreUrl = secret("SyntelliCoreUrl");
+const syntelliCoreApiKey = secret("SyntelliCoreApiKey");
 const cookieEncryptionKey = secret("CookieEncryptionKey");
 
 // AES-256-GCM encryption utility for securing user credentials in cookies
@@ -36,7 +36,7 @@ export interface LoginResponse {
   loginCookie: Cookie<"login_creds">;
 }
 
-// Authenticates user with Vault Markets CRM and sets secure encrypted cookie for 30 days
+// Authenticates user with Syntellicore CRM and sets secure encrypted cookie for 30 days
 export const login = api<LoginRequest, LoginResponse>(
   { expose: true, method: "POST", path: "/api/login" },
   async (req) => {
@@ -57,13 +57,13 @@ export const login = api<LoginRequest, LoginResponse>(
       formData.append("email", req.email);
       formData.append("password", req.password);
 
-      // Call Vault Markets CRM user_login endpoint
-      const requestUrl = `${vaultMarketsUrl()}/gateway/api/6/syntellicore.cfc?method=user_login`;
+      // Call Syntellicore CRM user_login endpoint
+      const requestUrl = `${syntelliCoreUrl()}/gateway/api/6/syntellicore.cfc?method=user_login`;
       const requestHeaders = {
-        "api_key": vaultMarketsApiKey(),
+        "api_key": syntelliCoreApiKey(),
       };
 
-      console.log("=== VAULT MARKETS LOGIN API REQUEST ===");
+      console.log("=== SYNTELLICORE LOGIN API REQUEST ===");
       console.log("URL:", requestUrl);
       console.log("Email:", req.email);
       console.log("Headers:", JSON.stringify(requestHeaders, null, 2));
@@ -75,7 +75,7 @@ export const login = api<LoginRequest, LoginResponse>(
         body: formData,
       });
 
-      console.log("=== VAULT MARKETS LOGIN API RESPONSE ===");
+      console.log("=== SYNTELLICORE LOGIN API RESPONSE ===");
       console.log("Status:", response.status);
       console.log("Status Text:", response.statusText);
 
@@ -135,11 +135,11 @@ export const login = api<LoginRequest, LoginResponse>(
       };
 
       console.log("Final response:", JSON.stringify({ ...successResponse, loginCookie: "***encrypted***" }, null, 2));
-      console.log("=== END VAULT MARKETS LOGIN API ===");
+      console.log("=== END SYNTELLICORE LOGIN API ===");
 
       return successResponse;
     } catch (error: any) {
-      console.log("=== VAULT MARKETS LOGIN API ERROR ===");
+      console.log("=== SYNTELLICORE LOGIN API ERROR ===");
       console.log("Error:", error);
       console.log("Error stack:", error.stack);
       

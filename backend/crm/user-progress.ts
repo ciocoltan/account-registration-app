@@ -1,9 +1,9 @@
 import { api, APIError } from "encore.dev/api";
 import { secret } from "encore.dev/config";
 
-// Configuration for Vault Markets CRM
-const vaultMarketsUrl = secret("VaultMarketsUrl");
-const vaultMarketsApiKey = secret("VaultMarketsApiKey");
+// Configuration for Syntellicore CRM
+const syntelliCoreUrl = secret("SyntelliCoreUrl");
+const syntelliCoreApiKey = secret("SyntelliCoreApiKey");
 
 // Interface for onboarding wizard step status
 export interface OnboardingStep {
@@ -24,7 +24,7 @@ export interface GetOnboardWizardStepsResponse {
   message: string;
 }
 
-// Retrieves user's onboarding wizard progress from Vault Markets CRM
+// Retrieves user's onboarding wizard progress from Syntellicore CRM
 export const getOnboardWizardSteps = api<GetOnboardWizardStepsRequest, GetOnboardWizardStepsResponse>(
   { expose: true, method: "POST", path: "/api/onboard-wizard-steps" },
   async (req) => {
@@ -38,7 +38,7 @@ export const getOnboardWizardSteps = api<GetOnboardWizardStepsRequest, GetOnboar
     }
 
     try {
-      console.log("=== VAULT MARKETS GET ONBOARD WIZARD STEPS API REQUEST ===");
+      console.log("=== SYNTELLICORE GET ONBOARD WIZARD STEPS API REQUEST ===");
       console.log("User:", req.user);
       console.log("Wizard ID:", req.owiz_id);
 
@@ -48,10 +48,10 @@ export const getOnboardWizardSteps = api<GetOnboardWizardStepsRequest, GetOnboar
       formData.append("access_token", req.access_token);
       formData.append("owiz_id", req.owiz_id);
 
-      // Call Vault Markets CRM get_onboard_wizard_user_steps_status endpoint
-      const requestUrl = `${vaultMarketsUrl()}/gateway/api/6/syntellicore.cfc?method=get_onboard_wizard_user_steps_status`;
+      // Call Syntellicore CRM get_onboard_wizard_user_steps_status endpoint
+      const requestUrl = `${syntelliCoreUrl()}/gateway/api/6/syntellicore.cfc?method=get_onboard_wizard_user_steps_status`;
       const requestHeaders = {
-        "api_key": vaultMarketsApiKey(),
+        "api_key": syntelliCoreApiKey(),
       };
 
       console.log("URL:", requestUrl);
@@ -64,7 +64,7 @@ export const getOnboardWizardSteps = api<GetOnboardWizardStepsRequest, GetOnboar
         body: formData,
       });
 
-      console.log("=== VAULT MARKETS GET ONBOARD WIZARD STEPS API RESPONSE ===");
+      console.log("=== SYNTELLICORE GET ONBOARD WIZARD STEPS API RESPONSE ===");
       console.log("Status:", response.status);
       console.log("Status Text:", response.statusText);
 
@@ -104,11 +104,11 @@ export const getOnboardWizardSteps = api<GetOnboardWizardStepsRequest, GetOnboar
       };
 
       console.log("Onboard wizard steps retrieved successfully. Count:", steps.length);
-      console.log("=== END VAULT MARKETS GET ONBOARD WIZARD STEPS API ===");
+      console.log("=== END SYNTELLICORE GET ONBOARD WIZARD STEPS API ===");
 
       return successResponse;
     } catch (error: any) {
-      console.log("=== VAULT MARKETS GET ONBOARD WIZARD STEPS API ERROR ===");
+      console.log("=== SYNTELLICORE GET ONBOARD WIZARD STEPS API ERROR ===");
       console.log("Error:", error);
       console.log("Error stack:", error.stack);
       
@@ -137,7 +137,7 @@ export interface SetOnboardWizardStepStatusResponse {
   message: string;
 }
 
-// Updates user's onboarding wizard step status in Vault Markets CRM
+// Updates user's onboarding wizard step status in Syntellicore CRM
 export const setOnboardWizardStepStatus = api<SetOnboardWizardStepStatusRequest, SetOnboardWizardStepStatusResponse>(
   { expose: true, method: "POST", path: "/api/onboard-wizard-step-status" },
   async (req) => {
@@ -151,7 +151,7 @@ export const setOnboardWizardStepStatus = api<SetOnboardWizardStepStatusRequest,
     }
 
     try {
-      console.log("=== VAULT MARKETS SET ONBOARD WIZARD STEP STATUS API REQUEST ===");
+      console.log("=== SYNTELLICORE SET ONBOARD WIZARD STEP STATUS API REQUEST ===");
       console.log("User:", req.user);
       console.log("Step ID:", req.owiz_step_id);
       console.log("Status:", req.status);
@@ -163,10 +163,10 @@ export const setOnboardWizardStepStatus = api<SetOnboardWizardStepStatusRequest,
       formData.append("owiz_step_id", req.owiz_step_id);
       formData.append("status", req.status);
 
-      // Call Vault Markets CRM set_onboard_wizard_user_step_status endpoint
-      const requestUrl = `${vaultMarketsUrl()}/gateway/api/6/syntellicore.cfc?method=set_onboard_wizard_user_step_status`;
+      // Call Syntellicore CRM set_onboard_wizard_user_step_status endpoint
+      const requestUrl = `${syntelliCoreUrl()}/gateway/api/6/syntellicore.cfc?method=set_onboard_wizard_user_step_status`;
       const requestHeaders = {
-        "api_key": vaultMarketsApiKey(),
+        "api_key": syntelliCoreApiKey(),
       };
 
       console.log("URL:", requestUrl);
@@ -179,7 +179,7 @@ export const setOnboardWizardStepStatus = api<SetOnboardWizardStepStatusRequest,
         body: formData,
       });
 
-      console.log("=== VAULT MARKETS SET ONBOARD WIZARD STEP STATUS API RESPONSE ===");
+      console.log("=== SYNTELLICORE SET ONBOARD WIZARD STEP STATUS API RESPONSE ===");
       console.log("Status:", response.status);
       console.log("Status Text:", response.statusText);
 
@@ -221,11 +221,11 @@ export const setOnboardWizardStepStatus = api<SetOnboardWizardStepStatusRequest,
       };
 
       console.log("Onboard wizard step status updated successfully");
-      console.log("=== END VAULT MARKETS SET ONBOARD WIZARD STEP STATUS API ===");
+      console.log("=== END SYNTELLICORE SET ONBOARD WIZARD STEP STATUS API ===");
 
       return successResponse;
     } catch (error: any) {
-      console.log("=== VAULT MARKETS SET ONBOARD WIZARD STEP STATUS API ERROR ===");
+      console.log("=== SYNTELLICORE SET ONBOARD WIZARD STEP STATUS API ERROR ===");
       console.log("Error:", error);
       console.log("Error stack:", error.stack);
       

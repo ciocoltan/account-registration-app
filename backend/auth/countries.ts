@@ -1,9 +1,9 @@
 import { api, APIError } from "encore.dev/api";
 import { secret } from "encore.dev/config";
 
-// Configuration for Vault Markets CRM
-const vaultMarketsUrl = secret("VaultMarketsUrl");
-const vaultMarketsApiKey = secret("VaultMarketsApiKey");
+// Configuration for Syntellicore CRM
+const syntelliCoreUrl = secret("SyntelliCoreUrl");
+const syntelliCoreApiKey = secret("SyntelliCoreApiKey");
 
 // Interface for country data structure from CRM
 export interface Country {
@@ -30,7 +30,7 @@ export interface GetCountriesResponse {
   message: string;
 }
 
-// Retrieves countries list from Vault Markets CRM for registration and address forms
+// Retrieves countries list from Syntellicore CRM for registration and address forms
 export const getCountries = api<GetCountriesRequest, GetCountriesResponse>(
   { expose: true, method: "POST", path: "/api/countries" },
   async (req) => {
@@ -40,13 +40,13 @@ export const getCountries = api<GetCountriesRequest, GetCountriesResponse>(
       formData.append('language', req.language || 'en');
       formData.append('show_on_register', req.show_on_register || '1');
 
-      // Make request to Vault Markets CRM get_countries endpoint
-      const requestUrl = `${vaultMarketsUrl()}/gateway/api/6/syntellicore.cfc?method=get_countries`;
+      // Make request to Syntellicore CRM get_countries endpoint
+      const requestUrl = `${syntelliCoreUrl()}/gateway/api/6/syntellicore.cfc?method=get_countries`;
       const requestHeaders = {
-        "api_key": vaultMarketsApiKey(),
+        "api_key": syntelliCoreApiKey(),
       };
 
-      console.log("=== VAULT MARKETS GET COUNTRIES API REQUEST ===");
+      console.log("=== SYNTELLICORE GET COUNTRIES API REQUEST ===");
       console.log("URL:", requestUrl);
       console.log("Headers:", JSON.stringify(requestHeaders, null, 2));
       console.log("Body (FormData):", Object.fromEntries(formData.entries()));
@@ -57,7 +57,7 @@ export const getCountries = api<GetCountriesRequest, GetCountriesResponse>(
         body: formData,
       });
 
-      console.log("=== VAULT MARKETS GET COUNTRIES API RESPONSE ===");
+      console.log("=== SYNTELLICORE GET COUNTRIES API RESPONSE ===");
       console.log("Status:", response.status);
       console.log("Status Text:", response.statusText);
 
@@ -91,11 +91,11 @@ export const getCountries = api<GetCountriesRequest, GetCountriesResponse>(
       };
 
       console.log("Final response:", JSON.stringify(successResponse, null, 2));
-      console.log("=== END VAULT MARKETS GET COUNTRIES API ===");
+      console.log("=== END SYNTELLICORE GET COUNTRIES API ===");
 
       return successResponse;
     } catch (error: any) {
-      console.log("=== VAULT MARKETS GET COUNTRIES API ERROR ===");
+      console.log("=== SYNTELLICORE GET COUNTRIES API ERROR ===");
       console.log("Error:", error);
       console.log("Error stack:", error.stack);
       

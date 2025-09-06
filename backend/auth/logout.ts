@@ -1,9 +1,9 @@
 import { api, APIError, Cookie } from "encore.dev/api";
 import { secret } from "encore.dev/config";
 
-// Configuration for Vault Markets CRM
-const vaultMarketsUrl = secret("VaultMarketsUrl");
-const vaultMarketsApiKey = secret("VaultMarketsApiKey");
+// Configuration for Syntellicore CRM
+const syntelliCoreUrl = secret("SyntelliCoreUrl");
+const syntelliCoreApiKey = secret("SyntelliCoreApiKey");
 
 export interface LogoutRequest {
   user: string;
@@ -17,7 +17,7 @@ export interface LogoutResponse {
   loginCookie: Cookie<"login_creds">;
 }
 
-// Logs out user from Vault Markets CRM and clears secure login cookie
+// Logs out user from Syntellicore CRM and clears secure login cookie
 export const logout = api<LogoutRequest, LogoutResponse>(
   { expose: true, method: "POST", path: "/api/logout" },
   async (req) => {
@@ -27,7 +27,7 @@ export const logout = api<LogoutRequest, LogoutResponse>(
     }
 
     try {
-      console.log("=== VAULT MARKETS LOGOUT PROCESS ===");
+      console.log("=== SYNTELLICORE LOGOUT PROCESS ===");
       console.log("User:", req.user);
 
       // Prepare form data for CRM logout API
@@ -35,13 +35,13 @@ export const logout = api<LogoutRequest, LogoutResponse>(
       formData.append("user", req.user);
       formData.append("access_token", req.access_token);
 
-      // Call Vault Markets CRM user_logout endpoint
-      const requestUrl = `${vaultMarketsUrl()}/gateway/api/6/syntellicore.cfc?method=user_logout`;
+      // Call Syntellicore CRM user_logout endpoint
+      const requestUrl = `${syntelliCoreUrl()}/gateway/api/6/syntellicore.cfc?method=user_logout`;
       const requestHeaders = {
-        "api_key": vaultMarketsApiKey(),
+        "api_key": syntelliCoreApiKey(),
       };
 
-      console.log("=== VAULT MARKETS LOGOUT API REQUEST ===");
+      console.log("=== SYNTELLICORE LOGOUT API REQUEST ===");
       console.log("URL:", requestUrl);
       console.log("Headers:", JSON.stringify(requestHeaders, null, 2));
       console.log("Body (FormData):", Object.fromEntries(formData.entries()));
@@ -52,7 +52,7 @@ export const logout = api<LogoutRequest, LogoutResponse>(
         body: formData,
       });
 
-      console.log("=== VAULT MARKETS LOGOUT API RESPONSE ===");
+      console.log("=== SYNTELLICORE LOGOUT API RESPONSE ===");
       console.log("Status:", response.status);
 
       const responseText = await response.text();
@@ -89,11 +89,11 @@ export const logout = api<LogoutRequest, LogoutResponse>(
       };
 
       console.log("Logout completed for user:", req.user);
-      console.log("=== END VAULT MARKETS LOGOUT API ===");
+      console.log("=== END SYNTELLICORE LOGOUT API ===");
 
       return successResponse;
     } catch (error: any) {
-      console.log("=== VAULT MARKETS LOGOUT API ERROR ===");
+      console.log("=== SYNTELLICORE LOGOUT API ERROR ===");
       console.log("Error:", error);
       console.log("Error stack:", error.stack);
 

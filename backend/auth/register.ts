@@ -2,9 +2,9 @@ import { api, APIError, Cookie } from "encore.dev/api";
 import { secret } from "encore.dev/config";
 import crypto from "crypto";
 
-// Configuration for Vault Markets CRM
-const vaultMarketsUrl = secret("VaultMarketsUrl");
-const vaultMarketsApiKey = secret("VaultMarketsApiKey");
+// Configuration for Syntellicore CRM
+const syntelliCoreUrl = secret("SyntelliCoreUrl");
+const syntelliCoreApiKey = secret("SyntelliCoreApiKey");
 const cookieEncryptionKey = secret("CookieEncryptionKey");
 
 // AES-256-GCM encryption utility for securing user credentials in cookies
@@ -39,7 +39,7 @@ export interface RegisterResponse {
   loginCookie: Cookie<"login_creds">;
 }
 
-// Gets country ID by ISO country code from Vault Markets CRM countries list
+// Gets country ID by ISO country code from Syntellicore CRM countries list
 async function getCountryIdByCode(countryCode: string): Promise<string> {
   try {
     console.log("=== GETTING COUNTRY ID BY CODE ===");
@@ -50,10 +50,10 @@ async function getCountryIdByCode(countryCode: string): Promise<string> {
     formData.append('language', 'en');
     formData.append('show_on_register', '1');
 
-    const response = await fetch(`${vaultMarketsUrl()}/gateway/api/6/syntellicore.cfc?method=get_countries`, {
+    const response = await fetch(`${syntelliCoreUrl()}/gateway/api/6/syntellicore.cfc?method=get_countries`, {
       method: "POST",
       headers: {
-        "api_key": vaultMarketsApiKey(),
+        "api_key": syntelliCoreApiKey(),
       },
       body: formData,
     });
@@ -101,12 +101,12 @@ async function performAutoLogin(email: string, password: string): Promise<{ jwt:
   formData.append('email', email);
   formData.append('password', password);
 
-  const requestUrl = `${vaultMarketsUrl()}/gateway/api/6/syntellicore.cfc?method=user_login`;
+  const requestUrl = `${syntelliCoreUrl()}/gateway/api/6/syntellicore.cfc?method=user_login`;
   const requestHeaders = {
-    "api_key": vaultMarketsApiKey(),
+    "api_key": syntelliCoreApiKey(),
   };
 
-  console.log("=== VAULT MARKETS AUTO-LOGIN AFTER REGISTER API REQUEST ===");
+  console.log("=== SYNTELLICORE AUTO-LOGIN AFTER REGISTER API REQUEST ===");
   console.log("URL:", requestUrl);
   console.log("Email:", email);
 
@@ -160,10 +160,10 @@ async function fetchCountriesList(): Promise<any[]> {
     formData.append('language', 'en');
     formData.append('show_on_register', '1');
 
-    const response = await fetch(`${vaultMarketsUrl()}/gateway/api/6/syntellicore.cfc?method=get_countries`, {
+    const response = await fetch(`${syntelliCoreUrl()}/gateway/api/6/syntellicore.cfc?method=get_countries`, {
       method: "POST",
       headers: {
-        "api_key": vaultMarketsApiKey(),
+        "api_key": syntelliCoreApiKey(),
       },
       body: formData,
     });
@@ -189,7 +189,7 @@ async function fetchCountriesList(): Promise<any[]> {
   }
 }
 
-// Registers new user with Vault Markets CRM and performs auto-login
+// Registers new user with Syntellicore CRM and performs auto-login
 export const register = api<RegisterRequest, RegisterResponse>(
   { expose: true, method: "POST", path: "/api/register" },
   async (req) => {
@@ -230,13 +230,13 @@ export const register = api<RegisterRequest, RegisterResponse>(
       formData.append("country_id", countryId);
       formData.append("currency", req.currency);
 
-      // Create user in Vault Markets CRM
-      const requestUrl = `${vaultMarketsUrl()}/gateway/api/6/syntellicore.cfc?method=create_user`;
+      // Create user in Syntellicore CRM
+      const requestUrl = `${syntelliCoreUrl()}/gateway/api/6/syntellicore.cfc?method=create_user`;
       const requestHeaders = {
-        "api_key": vaultMarketsApiKey(),
+        "api_key": syntelliCoreApiKey(),
       };
 
-      console.log("=== VAULT MARKETS CREATE USER API REQUEST ===");
+      console.log("=== SYNTELLICORE CREATE USER API REQUEST ===");
       console.log("URL:", requestUrl);
       console.log("Headers:", JSON.stringify(requestHeaders, null, 2));
       console.log("Body (FormData):", Object.fromEntries(formData.entries()));
@@ -247,7 +247,7 @@ export const register = api<RegisterRequest, RegisterResponse>(
         body: formData,
       });
 
-      console.log("=== VAULT MARKETS CREATE USER API RESPONSE ===");
+      console.log("=== SYNTELLICORE CREATE USER API RESPONSE ===");
       console.log("Status:", response.status);
       console.log("Status Text:", response.statusText);
 
@@ -328,11 +328,11 @@ export const register = api<RegisterRequest, RegisterResponse>(
       };
 
       console.log("Final registration response:", JSON.stringify({ ...successResponse, loginCookie: "***encrypted***", countries: `${countries.length} countries` }, null, 2));
-      console.log("=== END VAULT MARKETS REGISTRATION PROCESS ===");
+      console.log("=== END SYNTELLICORE REGISTRATION PROCESS ===");
 
       return successResponse;
     } catch (error: any) {
-      console.log("=== VAULT MARKETS REGISTRATION API ERROR ===");
+      console.log("=== SYNTELLICORE REGISTRATION API ERROR ===");
       console.log("Error:", error);
       console.log("Error stack:", error.stack);
       

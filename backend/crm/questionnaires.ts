@@ -1,9 +1,9 @@
 import { api, APIError } from "encore.dev/api";
 import { secret } from "encore.dev/config";
 
-// Configuration for Vault Markets CRM
-const vaultMarketsUrl = secret("VaultMarketsUrl");
-const vaultMarketsApiKey = secret("VaultMarketsApiKey");
+// Configuration for Syntellicore CRM
+const syntelliCoreUrl = secret("SyntelliCoreUrl");
+const syntelliCoreApiKey = secret("SyntelliCoreApiKey");
 
 // Interface for questionnaire question structure
 export interface QuestionnaireQuestion {
@@ -54,7 +54,7 @@ export interface GetQuestionnairesResponse {
   message: string;
 }
 
-// Retrieves questionnaire structure from Vault Markets CRM for form building
+// Retrieves questionnaire structure from Syntellicore CRM for form building
 export const getQuestionnaires = api<GetQuestionnairesRequest, GetQuestionnairesResponse>(
   { expose: true, method: "POST", path: "/api/questionnaires" },
   async (req) => {
@@ -68,7 +68,7 @@ export const getQuestionnaires = api<GetQuestionnairesRequest, GetQuestionnaires
     }
 
     try {
-      console.log("=== VAULT MARKETS GET QUESTIONNAIRES API REQUEST ===");
+      console.log("=== SYNTELLICORE GET QUESTIONNAIRES API REQUEST ===");
       console.log("User:", req.user);
       console.log("Questionnaire ID:", req.eqa_id);
 
@@ -78,10 +78,10 @@ export const getQuestionnaires = api<GetQuestionnairesRequest, GetQuestionnaires
       formData.append("access_token", req.access_token);
       formData.append("eqa_id", req.eqa_id);
 
-      // Call Vault Markets CRM get_questionnaires endpoint
-      const requestUrl = `${vaultMarketsUrl()}/gateway/api/6/syntellicore.cfc?method=get_questionnaires`;
+      // Call Syntellicore CRM get_questionnaires endpoint
+      const requestUrl = `${syntelliCoreUrl()}/gateway/api/6/syntellicore.cfc?method=get_questionnaires`;
       const requestHeaders = {
-        "api_key": vaultMarketsApiKey(),
+        "api_key": syntelliCoreApiKey(),
       };
 
       console.log("URL:", requestUrl);
@@ -94,7 +94,7 @@ export const getQuestionnaires = api<GetQuestionnairesRequest, GetQuestionnaires
         body: formData,
       });
 
-      console.log("=== VAULT MARKETS GET QUESTIONNAIRES API RESPONSE ===");
+      console.log("=== SYNTELLICORE GET QUESTIONNAIRES API RESPONSE ===");
       console.log("Status:", response.status);
       console.log("Status Text:", response.statusText);
 
@@ -138,11 +138,11 @@ export const getQuestionnaires = api<GetQuestionnairesRequest, GetQuestionnaires
 
       console.log("Questionnaire retrieved successfully:", questionnaireData.name);
       console.log("Questions count:", questionnaireData.questions?.length || 0);
-      console.log("=== END VAULT MARKETS GET QUESTIONNAIRES API ===");
+      console.log("=== END SYNTELLICORE GET QUESTIONNAIRES API ===");
 
       return successResponse;
     } catch (error: any) {
-      console.log("=== VAULT MARKETS GET QUESTIONNAIRES API ERROR ===");
+      console.log("=== SYNTELLICORE GET QUESTIONNAIRES API ERROR ===");
       console.log("Error:", error);
       console.log("Error stack:", error.stack);
       
@@ -174,7 +174,7 @@ export interface SetQuestionnaireUserAnswersResponse {
   message: string;
 }
 
-// Submits user answers to questionnaire in Vault Markets CRM
+// Submits user answers to questionnaire in Syntellicore CRM
 export const setQuestionnaireUserAnswers = api<SetQuestionnaireUserAnswersRequest, SetQuestionnaireUserAnswersResponse>(
   { expose: true, method: "POST", path: "/api/questionnaire-answers" },
   async (req) => {
@@ -188,7 +188,7 @@ export const setQuestionnaireUserAnswers = api<SetQuestionnaireUserAnswersReques
     }
 
     try {
-      console.log("=== VAULT MARKETS SET QUESTIONNAIRE ANSWERS API REQUEST ===");
+      console.log("=== SYNTELLICORE SET QUESTIONNAIRE ANSWERS API REQUEST ===");
       console.log("User:", req.user);
       console.log("Answers count:", req.eqa_multiple_answers.length);
 
@@ -201,10 +201,10 @@ export const setQuestionnaireUserAnswers = api<SetQuestionnaireUserAnswersReques
       const answersJson = JSON.stringify(req.eqa_multiple_answers);
       formData.append("eqa_multiple_answers", answersJson);
 
-      // Call Vault Markets CRM set_questionnaire_user_answers endpoint
-      const requestUrl = `${vaultMarketsUrl()}/gateway/api/6/syntellicore.cfc?method=set_questionnaire_user_answers`;
+      // Call Syntellicore CRM set_questionnaire_user_answers endpoint
+      const requestUrl = `${syntelliCoreUrl()}/gateway/api/6/syntellicore.cfc?method=set_questionnaire_user_answers`;
       const requestHeaders = {
-        "api_key": vaultMarketsApiKey(),
+        "api_key": syntelliCoreApiKey(),
       };
 
       console.log("URL:", requestUrl);
@@ -217,7 +217,7 @@ export const setQuestionnaireUserAnswers = api<SetQuestionnaireUserAnswersReques
         body: formData,
       });
 
-      console.log("=== VAULT MARKETS SET QUESTIONNAIRE ANSWERS API RESPONSE ===");
+      console.log("=== SYNTELLICORE SET QUESTIONNAIRE ANSWERS API RESPONSE ===");
       console.log("Status:", response.status);
       console.log("Status Text:", response.statusText);
 
@@ -253,11 +253,11 @@ export const setQuestionnaireUserAnswers = api<SetQuestionnaireUserAnswersReques
       };
 
       console.log("Questionnaire answers saved successfully for user:", req.user);
-      console.log("=== END VAULT MARKETS SET QUESTIONNAIRE ANSWERS API ===");
+      console.log("=== END SYNTELLICORE SET QUESTIONNAIRE ANSWERS API ===");
 
       return successResponse;
     } catch (error: any) {
-      console.log("=== VAULT MARKETS SET QUESTIONNAIRE ANSWERS API ERROR ===");
+      console.log("=== SYNTELLICORE SET QUESTIONNAIRE ANSWERS API ERROR ===");
       console.log("Error:", error);
       console.log("Error stack:", error.stack);
       
@@ -296,7 +296,7 @@ export interface GetQuestionnaireUserAnswersResponse {
   message: string;
 }
 
-// Retrieves user's saved answers from Vault Markets CRM questionnaire
+// Retrieves user's saved answers from Syntellicore CRM questionnaire
 export const getQuestionnaireUserAnswers = api<GetQuestionnaireUserAnswersRequest, GetQuestionnaireUserAnswersResponse>(
   { expose: true, method: "POST", path: "/api/questionnaire-user-answers" },
   async (req) => {
@@ -310,7 +310,7 @@ export const getQuestionnaireUserAnswers = api<GetQuestionnaireUserAnswersReques
     }
 
     try {
-      console.log("=== VAULT MARKETS GET QUESTIONNAIRE USER ANSWERS API REQUEST ===");
+      console.log("=== SYNTELLICORE GET QUESTIONNAIRE USER ANSWERS API REQUEST ===");
       console.log("User:", req.user);
       console.log("Questionnaire ID:", req.eqa_id);
 
@@ -320,10 +320,10 @@ export const getQuestionnaireUserAnswers = api<GetQuestionnaireUserAnswersReques
       formData.append("access_token", req.access_token);
       formData.append("eqa_id", req.eqa_id);
 
-      // Call Vault Markets CRM get_questionnaire_user_answers endpoint
-      const requestUrl = `${vaultMarketsUrl()}/gateway/api/6/syntellicore.cfc?method=get_questionnaire_user_answers`;
+      // Call Syntellicore CRM get_questionnaire_user_answers endpoint
+      const requestUrl = `${syntelliCoreUrl()}/gateway/api/6/syntellicore.cfc?method=get_questionnaire_user_answers`;
       const requestHeaders = {
-        "api_key": vaultMarketsApiKey(),
+        "api_key": syntelliCoreApiKey(),
       };
 
       console.log("URL:", requestUrl);
@@ -336,7 +336,7 @@ export const getQuestionnaireUserAnswers = api<GetQuestionnaireUserAnswersReques
         body: formData,
       });
 
-      console.log("=== VAULT MARKETS GET QUESTIONNAIRE USER ANSWERS API RESPONSE ===");
+      console.log("=== SYNTELLICORE GET QUESTIONNAIRE USER ANSWERS API RESPONSE ===");
       console.log("Status:", response.status);
       console.log("Status Text:", response.statusText);
 
@@ -376,11 +376,11 @@ export const getQuestionnaireUserAnswers = api<GetQuestionnaireUserAnswersReques
       };
 
       console.log("User answers retrieved successfully. Count:", answers.length);
-      console.log("=== END VAULT MARKETS GET QUESTIONNAIRE USER ANSWERS API ===");
+      console.log("=== END SYNTELLICORE GET QUESTIONNAIRE USER ANSWERS API ===");
 
       return successResponse;
     } catch (error: any) {
-      console.log("=== VAULT MARKETS GET QUESTIONNAIRE USER ANSWERS API ERROR ===");
+      console.log("=== SYNTELLICORE GET QUESTIONNAIRE USER ANSWERS API ERROR ===");
       console.log("Error:", error);
       console.log("Error stack:", error.stack);
       

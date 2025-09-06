@@ -1,9 +1,9 @@
 import { api, APIError } from "encore.dev/api";
 import { secret } from "encore.dev/config";
 
-// Configuration for Vault Markets CRM
-const vaultMarketsUrl = secret("VaultMarketsUrl");
-const vaultMarketsApiKey = secret("VaultMarketsApiKey");
+// Configuration for Syntellicore CRM
+const syntelliCoreUrl = secret("SyntelliCoreUrl");
+const syntelliCoreApiKey = secret("SyntelliCoreApiKey");
 
 // Interface for user data structure from CRM
 export interface UserData {
@@ -61,7 +61,7 @@ export interface GetUserDataResponse {
   message: string;
 }
 
-// Retrieves complete user data from Vault Markets CRM
+// Retrieves complete user data from Syntellicore CRM
 export const getUserData = api<GetUserDataRequest, GetUserDataResponse>(
   { expose: true, method: "POST", path: "/api/user-data" },
   async (req) => {
@@ -71,7 +71,7 @@ export const getUserData = api<GetUserDataRequest, GetUserDataResponse>(
     }
 
     try {
-      console.log("=== VAULT MARKETS GET USER DATA API REQUEST ===");
+      console.log("=== SYNTELLICORE GET USER DATA API REQUEST ===");
       console.log("User:", req.user);
 
       // Prepare form data for CRM user data API
@@ -79,10 +79,10 @@ export const getUserData = api<GetUserDataRequest, GetUserDataResponse>(
       formData.append("user", req.user);
       formData.append("access_token", req.access_token);
 
-      // Call Vault Markets CRM get_users endpoint
-      const requestUrl = `${vaultMarketsUrl()}/gateway/api/6/syntellicore.cfc?method=get_users`;
+      // Call Syntellicore CRM get_users endpoint
+      const requestUrl = `${syntelliCoreUrl()}/gateway/api/6/syntellicore.cfc?method=get_users`;
       const requestHeaders = {
-        "api_key": vaultMarketsApiKey(),
+        "api_key": syntelliCoreApiKey(),
       };
 
       console.log("URL:", requestUrl);
@@ -95,7 +95,7 @@ export const getUserData = api<GetUserDataRequest, GetUserDataResponse>(
         body: formData,
       });
 
-      console.log("=== VAULT MARKETS GET USER DATA API RESPONSE ===");
+      console.log("=== SYNTELLICORE GET USER DATA API RESPONSE ===");
       console.log("Status:", response.status);
       console.log("Status Text:", response.statusText);
 
@@ -138,11 +138,11 @@ export const getUserData = api<GetUserDataRequest, GetUserDataResponse>(
       };
 
       console.log("User data retrieved successfully for:", userData.customer_no);
-      console.log("=== END VAULT MARKETS GET USER DATA API ===");
+      console.log("=== END SYNTELLICORE GET USER DATA API ===");
 
       return successResponse;
     } catch (error: any) {
-      console.log("=== VAULT MARKETS GET USER DATA API ERROR ===");
+      console.log("=== SYNTELLICORE GET USER DATA API ERROR ===");
       console.log("Error:", error);
       console.log("Error stack:", error.stack);
       
@@ -172,7 +172,7 @@ export interface SetUserDataResponse {
   message: string;
 }
 
-// Updates user data in Vault Markets CRM
+// Updates user data in Syntellicore CRM
 export const setUserData = api<SetUserDataRequest, SetUserDataResponse>(
   { expose: true, method: "POST", path: "/api/update-user-data" },
   async (req) => {
@@ -182,7 +182,7 @@ export const setUserData = api<SetUserDataRequest, SetUserDataResponse>(
     }
 
     try {
-      console.log("=== VAULT MARKETS SET USER DATA API REQUEST ===");
+      console.log("=== SYNTELLICORE SET USER DATA API REQUEST ===");
       console.log("User:", req.user);
 
       // Prepare form data for CRM user data update API
@@ -198,10 +198,10 @@ export const setUserData = api<SetUserDataRequest, SetUserDataResponse>(
       if (req.cou_id) formData.append("cou_id", req.cou_id);
       if (req.birth_dt) formData.append("birth_dt", req.birth_dt);
 
-      // Call Vault Markets CRM set_user_data endpoint
-      const requestUrl = `${vaultMarketsUrl()}/gateway/api/6/syntellicore.cfc?method=set_user_data`;
+      // Call Syntellicore CRM set_user_data endpoint
+      const requestUrl = `${syntelliCoreUrl()}/gateway/api/6/syntellicore.cfc?method=set_user_data`;
       const requestHeaders = {
-        "api_key": vaultMarketsApiKey(),
+        "api_key": syntelliCoreApiKey(),
       };
 
       console.log("URL:", requestUrl);
@@ -214,7 +214,7 @@ export const setUserData = api<SetUserDataRequest, SetUserDataResponse>(
         body: formData,
       });
 
-      console.log("=== VAULT MARKETS SET USER DATA API RESPONSE ===");
+      console.log("=== SYNTELLICORE SET USER DATA API RESPONSE ===");
       console.log("Status:", response.status);
       console.log("Status Text:", response.statusText);
 
@@ -250,11 +250,11 @@ export const setUserData = api<SetUserDataRequest, SetUserDataResponse>(
       };
 
       console.log("User data updated successfully for:", req.user);
-      console.log("=== END VAULT MARKETS SET USER DATA API ===");
+      console.log("=== END SYNTELLICORE SET USER DATA API ===");
 
       return successResponse;
     } catch (error: any) {
-      console.log("=== VAULT MARKETS SET USER DATA API ERROR ===");
+      console.log("=== SYNTELLICORE SET USER DATA API ERROR ===");
       console.log("Error:", error);
       console.log("Error stack:", error.stack);
       

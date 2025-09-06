@@ -2,9 +2,9 @@ import { api, APIError, Cookie } from "encore.dev/api";
 import { secret } from "encore.dev/config";
 import crypto from "crypto";
 
-// Configuration for Vault Markets CRM
-const vaultMarketsUrl = secret("VaultMarketsUrl");
-const vaultMarketsApiKey = secret("VaultMarketsApiKey");
+// Configuration for Syntellicore CRM
+const syntelliCoreUrl = secret("SyntelliCoreUrl");
+const syntelliCoreApiKey = secret("SyntelliCoreApiKey");
 const cookieEncryptionKey = secret("CookieEncryptionKey");
 
 // AES-256-GCM decryption utility for reading encrypted user credentials from cookies
@@ -69,12 +69,12 @@ export const autoLogin = api<AutoLoginRequest, AutoLoginResponse>(
       formData.append("email", email);
       formData.append("password", password);
 
-      const requestUrl = `${vaultMarketsUrl()}/gateway/api/6/syntellicore.cfc?method=user_login`;
+      const requestUrl = `${syntelliCoreUrl()}/gateway/api/6/syntellicore.cfc?method=user_login`;
       const requestHeaders = {
-        "api_key": vaultMarketsApiKey(),
+        "api_key": syntelliCoreApiKey(),
       };
 
-      console.log("=== VAULT MARKETS AUTO-LOGIN API REQUEST ===");
+      console.log("=== SYNTELLICORE AUTO-LOGIN API REQUEST ===");
       console.log("URL:", requestUrl);
       console.log("Email:", email);
 
@@ -84,7 +84,7 @@ export const autoLogin = api<AutoLoginRequest, AutoLoginResponse>(
         body: formData,
       });
 
-      console.log("=== VAULT MARKETS AUTO-LOGIN API RESPONSE ===");
+      console.log("=== SYNTELLICORE AUTO-LOGIN API RESPONSE ===");
       console.log("Status:", response.status);
 
       const responseText = await response.text();
@@ -125,11 +125,11 @@ export const autoLogin = api<AutoLoginRequest, AutoLoginResponse>(
       };
 
       console.log("Auto-login successful for user:", userData.user);
-      console.log("=== END VAULT MARKETS AUTO-LOGIN API ===");
+      console.log("=== END SYNTELLICORE AUTO-LOGIN API ===");
 
       return successResponse;
     } catch (error: any) {
-      console.log("=== VAULT MARKETS AUTO-LOGIN API ERROR ===");
+      console.log("=== SYNTELLICORE AUTO-LOGIN API ERROR ===");
       console.log("Error:", error);
       console.log("Error stack:", error.stack);
 
