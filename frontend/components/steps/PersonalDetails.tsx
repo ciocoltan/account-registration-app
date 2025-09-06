@@ -124,7 +124,20 @@ function PersonalDetails() {
         return;
       }
 				// Pick the first country from registration data (or whichever logic you want)
-      const countryCode = "CY";
+//      const countryCode = "CY";
+				// Step 1: Try to detect country code from Cloudflare
+      let countryCode: string | null = null;
+      try {
+        const res = await fetch("https://cloudflare.com/cdn-cgi/trace");
+        const text = await res.text();
+        const locLine = text.split("\n").find(line => line.startsWith("loc="));
+        if (locLine) {
+          countryCode = locLine.split("=")[1].trim(); // e.g. "CY"
+        }
+      } catch (err) {
+        console.warn("Cloudflare detection failed:", err);
+      }
+				
         console.log('Auto-filling nationality from registration country:', countryCode);
         
         // Find the country by ISO code
