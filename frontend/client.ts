@@ -165,6 +165,7 @@ export namespace auth {
 /**
  * Import the endpoint handlers to derive the types for the client.
  */
+import { setPersonalDetails as api_crm_personal_details_setPersonalDetails } from "~backend/crm/personal-details";
 import {
     getQuestionnaireUserAnswers as api_crm_questionnaires_getQuestionnaireUserAnswers,
     getQuestionnaires as api_crm_questionnaires_getQuestionnaires,
@@ -191,6 +192,7 @@ export namespace crm {
             this.getQuestionnaires = this.getQuestionnaires.bind(this)
             this.getUserData = this.getUserData.bind(this)
             this.setOnboardWizardStepStatus = this.setOnboardWizardStepStatus.bind(this)
+            this.setPersonalDetails = this.setPersonalDetails.bind(this)
             this.setQuestionnaireUserAnswers = this.setQuestionnaireUserAnswers.bind(this)
             this.setUserData = this.setUserData.bind(this)
         }
@@ -238,6 +240,15 @@ export namespace crm {
             // Now make the actual call to the API
             const resp = await this.baseClient.callTypedAPI(`/api/onboard-wizard-step-status`, {method: "POST", body: JSON.stringify(params)})
             return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_crm_user_progress_setOnboardWizardStepStatus>
+        }
+
+        /**
+         * Submits personal details form data to Syntellicore CRM questionnaire
+         */
+        public async setPersonalDetails(params: RequestType<typeof api_crm_personal_details_setPersonalDetails>): Promise<ResponseType<typeof api_crm_personal_details_setPersonalDetails>> {
+            // Now make the actual call to the API
+            const resp = await this.baseClient.callTypedAPI(`/api/personal-details`, {method: "POST", body: JSON.stringify(params)})
+            return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_crm_personal_details_setPersonalDetails>
         }
 
         /**

@@ -5,6 +5,7 @@ import { useFormData } from '../../contexts/FormDataContext';
 import type { Country } from '~backend/auth/countries';
 import Spinner from '../Spinner';
 import backend from '~backend/client';
+import { useBackend } from '../../hooks/useBackend';
 
 const defaultCountries: Country[] = [
   { country_id: 1, name: 'Afghanistan', iso_alpha2_code: 'AF', iso_alpha3_code: 'AFG', tel_country_code: '93', show_on_register: 1, currency: 'USD', currency_id: 1, brand_id: 1, zone: 'Asia' },
@@ -35,6 +36,7 @@ function PersonalDetails() {
   const navigate = useNavigate();
   const { authData, isAuthenticated } = useAuth();
   const { formData, updateFormData } = useFormData();
+  const backend = useBackend();
   
   const [localFormData, setLocalFormData] = useState({
     title: formData.title || 'Mr',
@@ -232,6 +234,24 @@ function PersonalDetails() {
 
     setIsSubmitting(true);
     try {
+      // Get nationality text from countries list
+      const selectedCountry = countries.find(c => c.country_id.toString() === localFormData.nationality);
+      const nationalityText = selectedCountry?.name || '';
+
+      // Submit personal details to CRM
+      if (authData?.user && authData?.accessToken) {
+        await backend.crm.setPersonalDetails({
+          user: authData.user,
+          access_token: authData.accessToken,
+          firstName: localFormData['first-name'],
+          lastName: localFormData['last-name'],
+          nationality: localFormData.nationality,
+          nationalityText: nationalityText
+        });
+        
+        console.log('Personal details submitted to CRM successfully');
+      }
+      
       // Save all form data to localStorage before navigating
       updateFormData(localFormData);
       
