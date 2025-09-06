@@ -124,7 +124,7 @@ function PersonalDetails() {
         return;
       }
 				// Pick the first country from registration data (or whichever logic you want)
-      const countryCode = parsed.data;
+      const countryCode = "CY";
         console.log('Auto-filling nationality from registration country:', countryCode);
         
         // Find the country by ISO code
