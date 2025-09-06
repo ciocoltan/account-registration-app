@@ -126,7 +126,7 @@ function PersonalDetails() {
 				// Pick the first country from registration data (or whichever logic you want)
 //      const countryCode = "CY";
 				// Step 1: Try to detect country code from Cloudflare
-      let countryCode: string | null = null;
+      let countryCode = "MD";
       try {
         const res = await fetch("https://cloudflare.com/cdn-cgi/trace");
         const text = await res.text();
