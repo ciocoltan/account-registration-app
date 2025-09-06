@@ -48,8 +48,6 @@ export const getCountries = api<GetCountriesRequest, GetCountriesResponse>(
 
       console.log("=== SYNTELLICORE GET COUNTRIES API REQUEST ===");
       console.log("URL:", requestUrl);
-      console.log("Headers:", JSON.stringify(requestHeaders, null, 2));
-      console.log("Body (FormData):", Object.fromEntries(formData.entries()));
 
       const response = await fetch(requestUrl, {
         method: "POST",
@@ -59,10 +57,8 @@ export const getCountries = api<GetCountriesRequest, GetCountriesResponse>(
 
       console.log("=== SYNTELLICORE GET COUNTRIES API RESPONSE ===");
       console.log("Status:", response.status);
-      console.log("Status Text:", response.statusText);
-
+			
       const responseText = await response.text();
-      console.log("Raw Response Body:", responseText);
 
       if (!response.ok) {
         console.log("Request failed with status:", response.status);
