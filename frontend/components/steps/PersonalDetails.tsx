@@ -64,8 +64,9 @@ function PersonalDetails() {
         // Check if cache is less than 24 hours old
         const cacheAge = Date.now() - timestamp;
         const oneDayInMs = 24 * 60 * 60 * 1000;
-        
-        if (cacheAge < oneDayInMs) {
+        const oneMonthInMs = 30 * oneDayInMs;
+				
+        if (cacheAge < oneMonthInMs) {
           console.log('Loading countries from cache');
           setCountries(data);
           
