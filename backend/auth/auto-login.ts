@@ -99,7 +99,6 @@ export const autoLogin = api<AutoLoginRequest, AutoLoginResponse>(
       let data;
       try {
         data = JSON.parse(responseText);
-        console.log("Parsed Response JSON:", JSON.stringify(data, null, 2));
       } catch (parseError) {
         console.log("Failed to parse auto-login response as JSON:", parseError);
         throw APIError.internal("Invalid response format from auto-login service");
