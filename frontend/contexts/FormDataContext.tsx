@@ -55,6 +55,7 @@ export function FormDataProvider({ children }: { children: ReactNode }) {
       }
       try {
         console.log('Fetching form data from CRM backend...');
+				
         // Simulate a call to a backend endpoint that retrieves user data from the CRM
         // const response = await backend.crm.getFormData({ userId: authData.uid }); // This endpoint is a placeholder.
         // setFormData(response.data || {});
