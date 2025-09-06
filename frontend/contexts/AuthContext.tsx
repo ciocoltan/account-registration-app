@@ -74,7 +74,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       
       // Clear form data and countries cache
       keys.forEach(key => {
-        if (key.startsWith('form_data_') || key === 'countries_cache' || key === 'registration_country' || key.startsWith('user_progress_')) {
+        if ( key === 'registration_country' || key.startsWith('user_progress_')) {
           localStorage.removeItem(key);
         }
       });
