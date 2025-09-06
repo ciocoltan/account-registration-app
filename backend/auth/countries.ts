@@ -85,7 +85,6 @@ export const getCountries = api<GetCountriesRequest, GetCountriesResponse>(
         message: data.info?.message || "Countries retrieved successfully"
       };
 
-      console.log("Final response:", JSON.stringify(successResponse, null, 2));
       console.log("=== END SYNTELLICORE GET COUNTRIES API ===");
 
       return successResponse;
