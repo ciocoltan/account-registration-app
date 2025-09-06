@@ -116,7 +116,15 @@ function PersonalDetails() {
     try {
       const registrationData = localStorage.getItem('registration_country');
       if (registrationData && !formData.nationality) {
-        const { countryCode } = JSON.parse(registrationData);
+        const parsed = JSON.parse(registrationData);
+
+      // Ensure parsed has data array
+      if (!parsed?.data || !Array.isArray(parsed.data)) {
+        console.warn("Invalid registration_country format");
+        return;
+      }
+				// Pick the first country from registration data (or whichever logic you want)
+      const countryCode = parsed.data[0];
         console.log('Auto-filling nationality from registration country:', countryCode);
         
         // Find the country by ISO code
