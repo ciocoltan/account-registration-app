@@ -48,7 +48,7 @@ function ResidenceAddress() {
 
     const fetchCountries = async () => {
       try {
-        const response = await backend.auth.getCountries();
+        const response = await backend.auth.getCountries({});
         setCountries(response.countries);
 
         // Update default if we have better data from API

@@ -82,7 +82,7 @@ function PersonalDetails() {
       console.log('Fetching countries from API');
       setIsLoadingCountries(true);
       
-      const response = await backend.auth.getCountries();
+      const response = await backend.auth.getCountries({});
       const fetchedCountries = response.countries;
       
       // Cache the countries data

@@ -18,16 +18,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-function getCookie(name: string): string | null {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) {
-    const cookieValue = parts.pop()?.split(';').shift();
-    return cookieValue ? decodeURIComponent(cookieValue) : null;
-  }
-  return null;
-}
-
 interface AuthProviderProps {
   children: ReactNode;
 }
@@ -86,15 +76,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   useEffect(() => {
-    // Attempt auto-login on app load
+    // Attempt auto-login on app load. The browser will send the httpOnly cookie automatically.
     const attemptAutoLogin = async () => {
-      const loginCredsCookie = getCookie('login_creds');
-      if (!loginCredsCookie) {
-        console.log('No login credentials cookie found. Skipping auto-login.');
-        setIsLoading(false);
-        return;
-      }
-
       try {
         const response = await backend.auth.autoLogin({});
         
@@ -113,7 +96,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           createUserProgress(response.user);
         }
       } catch (error: any) {
-        console.log('Auto-login failed or no saved credentials:', error.message);
+        console.log('Auto-login failed or no session cookie:', error.message);
         // Clear all user data when auto-login fails
         clearAllUserData();
         
@@ -151,19 +134,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // Create user progress entry
         createUserProgress(response.user);
 
-        // If remember me is checked, set the login cookie
-        if (rememberMe) {
-          try {
-            await backend.auth.setLoginCookie({
-              email,
-              password
-            });
-            console.log('Login cookie set for remember me');
-          } catch (cookieError) {
-            console.error('Failed to set login cookie:', cookieError);
-            // Don't fail the login if cookie setting fails
-          }
-        }
+        // The cookie is set by the backend response automatically.
       } else {
         throw new Error('Invalid login response');
       }
@@ -210,17 +181,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // Create user progress entry
         createUserProgress(registerResponse.user);
 
-        // Set login cookie for auto-login on future visits
-        try {
-          await backend.auth.setLoginCookie({
-            email,
-            password
-          });
-          console.log('Login cookie set after registration');
-        } catch (cookieError) {
-          console.error('Failed to set login cookie after registration:', cookieError);
-          // Don't fail the registration if cookie setting fails
-        }
+        // The cookie is set by the backend response automatically.
       } else {
         throw new Error('Registration completed but auto-login failed');
       }
