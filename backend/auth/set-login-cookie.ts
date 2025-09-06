@@ -6,7 +6,8 @@ const cookieEncryptionKey = secret("CookieEncryptionKey");
 
 // AES-256-GCM encryption utility for securing user credentials in cookies
 function encrypt(text: string): string {
-  const key = Buffer.from(cookieEncryptionKey(), "utf8");
+  // Ensure the key is 32 bytes by hashing the secret
+  const key = crypto.createHash('sha256').update(String(cookieEncryptionKey())).digest();
   const iv = crypto.randomBytes(12); // 96-bit IV for GCM
   const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
   

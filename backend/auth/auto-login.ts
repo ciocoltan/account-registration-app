@@ -9,7 +9,8 @@ const cookieEncryptionKey = secret("CookieEncryptionKey");
 
 // AES-256-GCM decryption utility for reading encrypted user credentials from cookies
 function decrypt(text: string): string {
-  const key = Buffer.from(cookieEncryptionKey(), "utf8");
+  // Ensure the key is 32 bytes by hashing the secret
+  const key = crypto.createHash('sha256').update(String(cookieEncryptionKey())).digest();
   const data = Buffer.from(text, "base64");
 
   // Extract IV (12 bytes), Auth Tag (16 bytes), and encrypted data
