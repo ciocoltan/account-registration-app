@@ -2,15 +2,17 @@ import { api, APIError, Cookie } from "encore.dev/api";
 import { secret } from "encore.dev/config";
 import crypto from "crypto";
 
-const syntelliCoreUrl = secret("SyntelliCoreUrl");
-const syntelliCoreApiKey = secret("SyntelliCoreApiKey");
+// Configuration for Vault Markets CRM
+const vaultMarketsUrl = secret("VaultMarketsUrl");
+const vaultMarketsApiKey = secret("VaultMarketsApiKey");
 const cookieEncryptionKey = secret("CookieEncryptionKey");
 
-// Utility: decrypt AES-GCM
+// AES-256-GCM decryption utility for reading encrypted user credentials from cookies
 function decrypt(text: string): string {
   const key = Buffer.from(cookieEncryptionKey(), "utf8");
   const data = Buffer.from(text, "base64");
 
+  // Extract IV (12 bytes), Auth Tag (16 bytes), and encrypted data
   const iv = data.subarray(0, 12);
   const tag = data.subarray(12, 28);
   const encrypted = data.subarray(28);
@@ -33,38 +35,46 @@ export interface AutoLoginResponse {
   success: boolean;
 }
 
+// Performs automatic login using encrypted credentials from secure cookie
 export const autoLogin = api<AutoLoginRequest, AutoLoginResponse>(
   { expose: true, method: "POST", path: "/api/auto-login" },
   async (req) => {
     try {
+      // Check if encrypted credentials cookie exists
       if (!req.loginCreds?.value) {
         throw APIError.unauthenticated("No login credentials found");
       }
 
-      // 🔑 Decrypt cookie into email:password
+      console.log("=== AUTO-LOGIN ATTEMPT ===");
+      console.log("Encrypted credentials cookie found, attempting to decrypt...");
+
+      // Decrypt cookie to extract email and password
       let email: string, password: string;
       try {
         const credentialsString = decrypt(req.loginCreds.value);
         [email, password] = credentialsString.split(":");
-      } catch {
+        console.log("Credentials decrypted successfully for email:", email);
+      } catch (decryptError) {
+        console.log("Failed to decrypt credentials:", decryptError);
         throw APIError.unauthenticated("Invalid or corrupted credentials");
       }
 
       if (!email || !password) {
+        console.log("Decrypted credentials are incomplete");
         throw APIError.unauthenticated("Invalid credentials format");
       }
 
-      // 🔄 Reuse login API
+      // Use decrypted credentials to login with CRM
       const formData = new URLSearchParams();
       formData.append("email", email);
       formData.append("password", password);
 
-      const requestUrl = `${syntelliCoreUrl()}/gateway/api/1/syntellicore.cfc?method=user_login`;
+      const requestUrl = `${vaultMarketsUrl()}/gateway/api/6/syntellicore.cfc?method=user_login`;
       const requestHeaders = {
-        api_key: syntelliCoreApiKey(),
+        "api_key": vaultMarketsApiKey(),
       };
 
-      console.log("=== SYNTELLICORE AUTO-LOGIN API REQUEST ===");
+      console.log("=== VAULT MARKETS AUTO-LOGIN API REQUEST ===");
       console.log("URL:", requestUrl);
       console.log("Email:", email);
 
@@ -74,42 +84,60 @@ export const autoLogin = api<AutoLoginRequest, AutoLoginResponse>(
         body: formData,
       });
 
+      console.log("=== VAULT MARKETS AUTO-LOGIN API RESPONSE ===");
+      console.log("Status:", response.status);
+
       const responseText = await response.text();
       console.log("Raw Response Body:", responseText);
 
       if (!response.ok) {
+        console.log("Auto-login request failed with status:", response.status);
         throw APIError.unauthenticated("Auto-login failed - credentials may be invalid");
       }
 
       let data;
       try {
         data = JSON.parse(responseText);
+        console.log("Parsed Response JSON:", JSON.stringify(data, null, 2));
       } catch (parseError) {
         console.log("Failed to parse auto-login response as JSON:", parseError);
         throw APIError.internal("Invalid response format from auto-login service");
       }
 
+      // Validate CRM auto-login response
       if (!data.success || !data.data || !Array.isArray(data.data) || data.data.length === 0) {
+        console.log("CRM auto-login API returned error or invalid response structure");
         throw APIError.unauthenticated("Auto-login failed - credentials may be invalid");
       }
 
       const userData = data.data[0];
-      if (!userData.authentication_token) {
+      if (!userData.authentication_token || !userData.user) {
+        console.log("CRM auto-login API returned success but missing authentication data");
         throw APIError.unauthenticated("Auto-login failed - credentials may be invalid");
       }
 
-      return {
+      const successResponse = {
         jwt: userData.authentication_token,
-        message: "Auto-login successful",
+        message: data.info?.message || "Auto-login successful",
         user: userData.user,
         access_token: userData.authentication_token,
         success: true,
       };
-    } catch (error: any) {
-      console.log("=== SYNTELLICORE AUTO-LOGIN API ERROR ===");
-      console.error(error);
 
-      if (error instanceof APIError) throw error;
+      console.log("Auto-login successful for user:", userData.user);
+      console.log("=== END VAULT MARKETS AUTO-LOGIN API ===");
+
+      return successResponse;
+    } catch (error: any) {
+      console.log("=== VAULT MARKETS AUTO-LOGIN API ERROR ===");
+      console.log("Error:", error);
+      console.log("Error stack:", error.stack);
+
+      if (error instanceof APIError) {
+        throw error;
+      }
+      
+      console.error("Auto-login API error:", error);
       throw APIError.unauthenticated("Auto-login service failed");
     }
   }

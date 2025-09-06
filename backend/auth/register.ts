@@ -1,8 +1,25 @@
-import { api, APIError } from "encore.dev/api";
+import { api, APIError, Cookie } from "encore.dev/api";
 import { secret } from "encore.dev/config";
+import crypto from "crypto";
 
-const syntelliCoreUrl = secret("SyntelliCoreUrl");
-const syntelliCoreApiKey = secret("SyntelliCoreApiKey");
+// Configuration for Vault Markets CRM
+const vaultMarketsUrl = secret("VaultMarketsUrl");
+const vaultMarketsApiKey = secret("VaultMarketsApiKey");
+const cookieEncryptionKey = secret("CookieEncryptionKey");
+
+// AES-256-GCM encryption utility for securing user credentials in cookies
+function encrypt(text: string): string {
+  const key = Buffer.from(cookieEncryptionKey(), "utf8");
+  const iv = crypto.randomBytes(12); // 96-bit IV for GCM
+  const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
+  
+  const encrypted = Buffer.concat([cipher.update(text, "utf8"), cipher.final()]);
+  const tag = cipher.getAuthTag();
+  
+  // Combine IV + Auth Tag + Encrypted Data
+  const combined = Buffer.concat([iv, tag, encrypted]);
+  return combined.toString("base64");
+}
 
 export interface RegisterRequest {
   email: string;
@@ -17,26 +34,33 @@ export interface RegisterResponse {
   user?: string;
   access_token?: string;
   success: boolean;
+  countries: any[];
+  // Secure cookie containing encrypted user credentials for auto-login
+  loginCookie: Cookie<"login_creds">;
 }
 
-// Gets country ID by country code from Syntellicore countries API
+// Gets country ID by ISO country code from Vault Markets CRM countries list
 async function getCountryIdByCode(countryCode: string): Promise<string> {
   try {
+    console.log("=== GETTING COUNTRY ID BY CODE ===");
+    console.log("Country Code:", countryCode);
+
+    // Fetch countries from CRM to find matching country ID
     const formData = new URLSearchParams();
     formData.append('language', 'en');
     formData.append('show_on_register', '1');
 
-    const response = await fetch(`${syntelliCoreUrl()}/gateway/api/6/syntellicore.cfc?method=get_countries`, {
+    const response = await fetch(`${vaultMarketsUrl()}/gateway/api/6/syntellicore.cfc?method=get_countries`, {
       method: "POST",
       headers: {
-        "api_key": syntelliCoreApiKey(),
+        "api_key": vaultMarketsApiKey(),
       },
       body: formData,
     });
 
     if (!response.ok) {
       console.log("Countries API failed, using default country ID");
-      return "3"; // Default fallback
+      return "3"; // Default fallback country ID
     }
 
     const responseText = await response.text();
@@ -48,17 +72,18 @@ async function getCountryIdByCode(countryCode: string): Promise<string> {
       return "3"; // Default fallback
     }
 
-    const countries = data.data || data.countries || [];
+    // Search for country in CRM response
+    const countries = data.data || [];
     
     if (Array.isArray(countries)) {
       const country = countries.find((c: any) => 
         c.iso_alpha2_code === countryCode || 
-        c.country_code === countryCode ||
-        c.code === countryCode
+        c.iso_alpha3_code === countryCode
       );
       
       if (country) {
-        return country.country_id || country.id || "3";
+        console.log("Found matching country:", country.name, "ID:", country.country_id);
+        return country.country_id.toString();
       }
     }
     
@@ -70,19 +95,20 @@ async function getCountryIdByCode(countryCode: string): Promise<string> {
   }
 }
 
-// Performs login after registration
-async function performLogin(email: string, password: string): Promise<{ jwt: string; user: string; access_token: string }> {
+// Performs auto-login after successful registration to get authentication token
+async function performAutoLogin(email: string, password: string): Promise<{ jwt: string; user: string; access_token: string }> {
   const formData = new URLSearchParams();
   formData.append('email', email);
   formData.append('password', password);
 
-  const requestUrl = `${syntelliCoreUrl()}/gateway/api/1/syntellicore.cfc?method=user_login`;
+  const requestUrl = `${vaultMarketsUrl()}/gateway/api/6/syntellicore.cfc?method=user_login`;
   const requestHeaders = {
-    "api_key": syntelliCoreApiKey(),
+    "api_key": vaultMarketsApiKey(),
   };
 
-  console.log("=== SYNTELLICORE AUTO-LOGIN AFTER REGISTER API REQUEST ===");
+  console.log("=== VAULT MARKETS AUTO-LOGIN AFTER REGISTER API REQUEST ===");
   console.log("URL:", requestUrl);
+  console.log("Email:", email);
 
   const response = await fetch(requestUrl, {
     method: "POST",
@@ -91,7 +117,7 @@ async function performLogin(email: string, password: string): Promise<{ jwt: str
   });
 
   const responseText = await response.text();
-  console.log("Raw Login Response Body:", responseText);
+  console.log("Raw Auto-Login Response Body:", responseText);
 
   if (!response.ok) {
     console.log("Auto-login request failed with status:", response.status);
@@ -106,15 +132,15 @@ async function performLogin(email: string, password: string): Promise<{ jwt: str
     throw APIError.internal("Invalid response format from auto-login service");
   }
   
-  // Check if the response indicates success and extract authentication data
+  // Validate auto-login response structure
   if (!data.success || !data.data || !Array.isArray(data.data) || data.data.length === 0) {
     console.log("Auto-login API returned error or invalid response structure");
     throw APIError.internal("Auto-login after registration failed");
   }
 
   const userData = data.data[0];
-  if (!userData.authentication_token) {
-    console.log("Auto-login API returned success but missing authentication_token");
+  if (!userData.authentication_token || !userData.user) {
+    console.log("Auto-login API returned success but missing authentication data");
     throw APIError.internal("Auto-login after registration failed");
   }
 
@@ -125,57 +151,166 @@ async function performLogin(email: string, password: string): Promise<{ jwt: str
   };
 }
 
+// Fetches countries list from CRM to return with registration response
+async function fetchCountriesList(): Promise<any[]> {
+  try {
+    console.log("=== FETCHING COUNTRIES LIST FOR REGISTRATION RESPONSE ===");
+
+    const formData = new URLSearchParams();
+    formData.append('language', 'en');
+    formData.append('show_on_register', '1');
+
+    const response = await fetch(`${vaultMarketsUrl()}/gateway/api/6/syntellicore.cfc?method=get_countries`, {
+      method: "POST",
+      headers: {
+        "api_key": vaultMarketsApiKey(),
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      console.log("Countries API failed, returning empty list");
+      return [];
+    }
+
+    const responseText = await response.text();
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (parseError) {
+      console.log("Failed to parse countries response as JSON:", parseError);
+      return [];
+    }
+
+    return data.data || [];
+  } catch (error) {
+    console.log("Error fetching countries list:", error);
+    return [];
+  }
+}
+
+// Registers new user with Vault Markets CRM and performs auto-login
 export const register = api<RegisterRequest, RegisterResponse>(
-  { expose: true, method: "POST", path: "/api/register-user" },
+  { expose: true, method: "POST", path: "/api/register" },
   async (req) => {
+    // Validate input data
     if (!req.email || !req.password) {
       throw APIError.invalidArgument("Email and password are required");
     }
 
+    // Email pattern validation
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(req.email)) {
+      throw APIError.invalidArgument("Invalid email format");
+    }
+
+    // Password pattern validation - at least 8 characters, 1 uppercase, 1 lowercase, 1 number
+    const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,}$/;
+    if (!passwordPattern.test(req.password)) {
+      throw APIError.invalidArgument("Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number");
+    }
+
+    if (!req.countryCode) {
+      throw APIError.invalidArgument("Country code is required");
+    }
+
     try {
-      console.log("=== GETTING COUNTRY BY CODE ===");
+      console.log("=== STARTING USER REGISTRATION PROCESS ===");
+      console.log("Email:", req.email);
+      console.log("Country Code:", req.countryCode);
+      console.log("Currency:", req.currency);
+
+      // Get country ID from CRM based on detected country code
       const countryId = await getCountryIdByCode(req.countryCode);
 
+      // Prepare form data for CRM user creation
       const formData = new URLSearchParams();
       formData.append("email", req.email);
       formData.append("password", req.password);
       formData.append("country_id", countryId);
       formData.append("currency", req.currency);
 
-      const requestUrl = `${syntelliCoreUrl()}/gateway/api/6/syntellicore.cfc?method=create_user`;
+      // Create user in Vault Markets CRM
+      const requestUrl = `${vaultMarketsUrl()}/gateway/api/6/syntellicore.cfc?method=create_user`;
+      const requestHeaders = {
+        "api_key": vaultMarketsApiKey(),
+      };
+
+      console.log("=== VAULT MARKETS CREATE USER API REQUEST ===");
+      console.log("URL:", requestUrl);
+      console.log("Headers:", JSON.stringify(requestHeaders, null, 2));
+      console.log("Body (FormData):", Object.fromEntries(formData.entries()));
+
       const response = await fetch(requestUrl, {
         method: "POST",
-        headers: { "api_key": syntelliCoreApiKey() },
+        headers: requestHeaders,
         body: formData,
       });
 
+      console.log("=== VAULT MARKETS CREATE USER API RESPONSE ===");
+      console.log("Status:", response.status);
+      console.log("Status Text:", response.statusText);
+
       const responseText = await response.text();
+      console.log("Raw Response Body:", responseText);
+
+      if (!response.ok) {
+        console.log("Request failed with status:", response.status);
+        throw APIError.internal("User creation failed");
+      }
+
       let data;
       try {
         data = JSON.parse(responseText);
-      } catch {
+        console.log("Parsed Response JSON:", JSON.stringify(data, null, 2));
+      } catch (parseError) {
+        console.log("Failed to parse response as JSON:", parseError);
         throw APIError.internal("Invalid response format from registration service");
       }
 
+      // Handle CRM registration errors
       if (data.success === false || data.error) {
         const errorMessage = data.info?.message || data.error || "Registration failed";
-        if (errorMessage.toLowerCase().includes("email exists")) {
+        console.log("CRM registration error:", errorMessage);
+        
+        if (errorMessage.toLowerCase().includes("email exists") || 
+            errorMessage.toLowerCase().includes("already exists")) {
           throw APIError.alreadyExists("User with this email already exists");
         }
         if (errorMessage.toLowerCase().includes("password")) {
-          throw APIError.invalidArgument("Password must meet requirements");
+          throw APIError.invalidArgument("Password does not meet requirements");
         }
         throw APIError.invalidArgument(errorMessage);
       }
 
-      // If registration was successful, perform auto-login
-      console.log("Registration successful, performing auto-login...");
-      const loginData = await performLogin(req.email, req.password);
+      // Validate successful registration response
+      if (!data.success || !data.data || !Array.isArray(data.data) || data.data.length === 0) {
+        console.log("Registration succeeded but invalid response structure");
+        throw APIError.internal("Registration completed but response invalid");
+      }
 
-      // 🔒 Create secure cookie with JWT (not password!)
-      const loginCookie: Cookie<"login_token"> = {
-        value: loginData.jwt,
-        expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+      const newUserData = data.data[0];
+      if (!newUserData.user) {
+        console.log("Registration succeeded but no user ID returned");
+        throw APIError.internal("Registration completed but user ID missing");
+      }
+
+      console.log("User created successfully:", newUserData.user);
+
+      // Perform auto-login to get authentication token
+      console.log("Performing auto-login after registration...");
+      const loginData = await performAutoLogin(req.email, req.password);
+
+      // Fetch countries list for frontend
+      const countries = await fetchCountriesList();
+
+      // Create encrypted cookie with user credentials for 30-day auto-login
+      const credentialsString = `${req.email}:${req.password}`;
+      const encryptedCredentials = encrypt(credentialsString);
+
+      const loginCookie: Cookie<"login_creds"> = {
+        value: encryptedCredentials,
+        expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
         httpOnly: true,
         secure: true,
         sameSite: "Strict",
@@ -184,21 +319,28 @@ export const register = api<RegisterRequest, RegisterResponse>(
 
       const successResponse = {
         jwt: loginData.jwt,
-        message: "User registered and logged in successfully",
+        message: data.info?.message || "User registered and logged in successfully",
         user: loginData.user,
         access_token: loginData.access_token,
         success: true,
-        loginCookie, // ⬅️ Now included in response
+        countries: countries,
+        loginCookie,
       };
 
-      console.log("Final response:", JSON.stringify(successResponse, null, 2));
-      return successResponse;
+      console.log("Final registration response:", JSON.stringify({ ...successResponse, loginCookie: "***encrypted***", countries: `${countries.length} countries` }, null, 2));
+      console.log("=== END VAULT MARKETS REGISTRATION PROCESS ===");
 
+      return successResponse;
     } catch (error: any) {
-      console.log("=== SYNTELLICORE REGISTER API ERROR ===");
+      console.log("=== VAULT MARKETS REGISTRATION API ERROR ===");
+      console.log("Error:", error);
+      console.log("Error stack:", error.stack);
+      
       if (error instanceof APIError) {
         throw error;
       }
+      
+      console.error("Registration API error:", error);
       throw APIError.internal("Registration service unavailable");
     }
   }
